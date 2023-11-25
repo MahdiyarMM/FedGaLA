@@ -40,7 +40,7 @@ def main(args):
     domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
 
     # Save the initial models as epoch 0
-    model_save_path = './saved_models'
+    model_save_path = args.model_save_path
     if not os.path.exists(model_save_path):
         os.makedirs(model_save_path)
 
