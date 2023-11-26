@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 from models import  LinearClassifier
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 
 def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None):
     client_model.train()
@@ -63,6 +64,7 @@ def linear_evaluation(args,global_model,device):
     # Load the saved global model
     model_path = os.path.join(args.model_save_path, f'global_model.pth')
     global_model.load_state_dict(torch.load(model_path))
+    global_model = global_model.to(device)
 
     # Freeze the parameters of the model
     for param in global_model.parameters():
@@ -70,13 +72,16 @@ def linear_evaluation(args,global_model,device):
 
     # Load the target domain dataset
 
-    target_domain_dataset = target_domain_data(root=f'./data/PACS/{args.test_domain}/', transform=get_augmentations_linear())
-    train_size = int(0.3 * len(target_domain_dataset))
-    test_size = len(target_domain_dataset) - train_size
-    train_dataset, test_dataset = random_split(target_domain_dataset, [train_size, test_size])
+    if args.dataset.lower() == 'pacs':
+        target_domain_dataset = target_domain_data(root=f'{args.dataroot}/{args.test_domain}/', transform=get_augmentations_linear(args.dataset.lower()))
+        train_size = int(args.labeled_ratio * len(target_domain_dataset))
+        test_size = len(target_domain_dataset) - train_size
+        train_dataset, test_dataset = random_split(target_domain_dataset, [train_size, test_size])
 
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=args.workers)
+        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=args.workers)
+
+    
 
     # Instantiate the linear classifier
     input_dim = 512   # Assuming the output dimension of the global model's feature extractor is 512
@@ -120,4 +125,4 @@ def linear_evaluation(args,global_model,device):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    print(f'Accuracy of the linear classifier on the {args.test_domain} images: {100 * correct / total}%')
+    print(f'Accuracy of the linear classifier on the {args.test_domain} images: {np.round(100 * correct / total, 3)}%')

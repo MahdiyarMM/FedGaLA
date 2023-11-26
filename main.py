@@ -21,13 +21,23 @@ def main(args):
     # Initialize a variable to store the previous global model weights
     previous_global_model_weights = None
 
+    assert args.dataset.lower() in ["pacs", "homeoffice", 'domainnet'], "Please make sure one of the following datasets has been selected: ['pacs', 'homeoffice', 'domainnet']"
 
-    domains = ['art_painting', 'sketch', 'photo', 'cartoon']
-    target_domain =  [args.test_domain]
+    if args.dataset.lower() == "pacs":
 
-    source_domains = [domain for domain in domains if domain not in target_domain]
+        domains = ['art_painting', 'sketch', 'photo', 'cartoon']
+        domains_dict = {d[0]:d for  d in domains}
+        target_domain =  domains_dict[args.test_domain]
     
-    print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
+        assert args.test_domain.lower() in list("pacs"), "The test domain argument should be either 'P', 'A', 'C', or 'S' when dataset == pacs"
+        args.test_domain = target_domain
+
+        source_domains = [domain for domain in domains if domain not in target_domain]
+        print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
+
+        source_dataloader = {domain: DataLoader(PACSDataset(root=f'{args.dataroot}/{domain}/', transform=get_augmentations(dataset_name=args.dataset.lower())), batch_size=args.batch_size, shuffle=True, num_workers=args.workers) for domain in source_domains}
+        total_samples = sum(len(dataset) for dataset in source_dataloader.values())
+        domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
  
 
 
@@ -35,9 +45,6 @@ def main(args):
     client_models = {domain: copy.deepcopy(global_model) for domain in source_domains}
     optimizers = {domain: optim.Adam(client_models[domain].parameters(), lr=0.0001) for domain in source_domains}
 
-    source_dataloader = {domain: DataLoader(PACSDataset(root=f'./data/PACS/{domain}/', transform=get_augmentations()), batch_size=args.batch_szie, shuffle=True, num_workers=2) for domain in source_domains}
-    total_samples = sum(len(dataset) for dataset in source_dataloader.values())
-    domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
 
     # Save the initial models as epoch 0
     model_save_path = args.model_save_path
@@ -46,7 +53,7 @@ def main(args):
 
 
 
-
+    print(f'Selected device: {device}')
     model_delta = None
     for comm_round in range(args.communication_rounds):
         print(f"Communication Round {comm_round + 1}/{args.communication_rounds}")
@@ -69,11 +76,10 @@ def main(args):
 if __name__ == '__main__':
     # Training parameters
     parser = argparse.ArgumentParser(description='Federated Domain Generalization')
-    parser.add_argument('--test_domain', type=str, default='photo', metavar='Domain',
-                        help='What domain to test on (default: photo)')
+
     parser.add_argument('--communication_rounds', type=int, default=2, metavar='Rounds',
                         help='Number of communication rounds (default: 100)')
-    parser.add_argument('--batch_szie', type=int, default=128, metavar='Batch Size',
+    parser.add_argument('--batch_size', type=int, default=128, metavar='Batch Size',
                         help='Batch size (default: 128)')
     parser.add_argument('--model_save_path', type=str, default='./saved_models', metavar='save_path',
                         help='Path to save models (default: ./saved_models')
@@ -87,6 +93,16 @@ if __name__ == '__main__':
                     help='Which aggregation method to use (default: FedAVG) [FedAVG, FedDR]')
     parser.add_argument('--clinet_gm', type=str, default="None", metavar='Clinet gradient manipulation',
                 help='Which client level method to use (default: None) [None, Delta]')
+    parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
+                help='Dataset to train on (default: pacs) [pacs, homeoffice]')
+    parser.add_argument('--test_domain', type=str, default='photo', metavar='Domain',
+                        help='What domain to test on (default: photo)')
+    parser.add_argument('--dataroot', type=str, default='./data/PACS/', metavar='Dataset Root Path',
+                        help='The absolute path containing the selected dataset (default: photo)')
+    parser.add_argument('--workers', type=int, default=2, metavar='gpu workers for the dataset',
+                        help = 'help=gpu workers for the dataset (default: 2)')
+    parser.add_argument('--labeled_ratio', type=float, default=0.3, metavar='labeleded ratio',
+                        help = 'ratio of the labeled data in the linear evaluation')
 
 
 

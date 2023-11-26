@@ -1,26 +1,27 @@
-
 from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader, Dataset, random_split
 from torchvision.datasets import ImageFolder
 
 
-def get_augmentations():
-    augmentation = transforms.Compose([
-        transforms.RandomResizedCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Resize((32,32),antialias=True),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-    return augmentation
+def get_augmentations(dataset_name = 'pacs'):
+    if dataset_name == "pacs":
+        augmentation = transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Resize((32,32),antialias=True),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        return augmentation
 
-def get_augmentations_linear():
-    augmentation = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Resize((32,32),antialias=True),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-    return augmentation
+def get_augmentations_linear(dataset_name = 'pacs'):
+    if dataset_name == "pacs":
+        augmentation = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Resize((32,32),antialias=True),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        return augmentation
 
 class PACSDataset(Dataset):
     def __init__(self, root, transform=None):
