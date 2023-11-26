@@ -5,21 +5,31 @@ from torchvision.datasets import ImageFolder
 
 def get_augmentations(dataset_name = 'pacs'):
     if dataset_name == "pacs":
+        s = 1
+        color_jitter = transforms.ColorJitter(
+            0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
+        )
         augmentation = transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
+            transforms.RandomResizedCrop(size=32),
+            transforms.RandomHorizontalFlip(),  # with 0.5 probability
+            transforms.RandomApply([color_jitter], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
             transforms.ToTensor(),
-            transforms.Resize((32,32),antialias=True),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         return augmentation
 
 def get_augmentations_linear(dataset_name = 'pacs'):
     if dataset_name == "pacs":
+        s = 1
+        color_jitter = transforms.ColorJitter(
+            0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
+        )
         augmentation = transforms.Compose([
+            transforms.RandomResizedCrop(size=32),
+            transforms.RandomHorizontalFlip(),  # with 0.5 probability
+            transforms.RandomApply([color_jitter], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
             transforms.ToTensor(),
-            transforms.Resize((32,32),antialias=True),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         return augmentation
 

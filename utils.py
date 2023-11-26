@@ -76,10 +76,10 @@ def linear_evaluation(args,global_model,device):
         target_domain_dataset = target_domain_data(root=f'{args.dataroot}/{args.test_domain}/', transform=get_augmentations_linear(args.dataset.lower()))
         train_size = int(args.labeled_ratio * len(target_domain_dataset))
         test_size = len(target_domain_dataset) - train_size
-        train_dataset, test_dataset = random_split(target_domain_dataset, [train_size, test_size])
+        train_dataset, test_dataset = random_split(target_domain_dataset, [train_size, test_size], generator=torch.Generator().manual_seed(args.le_random_seed)) # added a manual seed so taht the same images will be selected for training of the linear evaluator
 
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=args.workers)
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=args.workers)
+        train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
+        test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
 
     
 

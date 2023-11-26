@@ -67,6 +67,8 @@ def main(args):
         model_delta = federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights)
         if comm_round % 10 == 0:
             linear_evaluation(args,global_model,device)
+        
+        print("############################################## End of Round ########################################")
 
     linear_evaluation(args,global_model,device)
 
@@ -83,9 +85,9 @@ if __name__ == '__main__':
                         help='Batch size (default: 128)')
     parser.add_argument('--model_save_path', type=str, default='./saved_models', metavar='save_path',
                         help='Path to save models (default: ./saved_models')
-    parser.add_argument('--client_epochs', type=int, default=1, metavar='client_epochs',
+    parser.add_argument('--client_epochs', type=int, default=5, metavar='client_epochs',
                         help='Number of epochs to train on each client (default: 5)')
-    parser.add_argument('--linear_lr', type=float, default=0.001, metavar='Linear LR',
+    parser.add_argument('--linear_lr', type=float, default=3e-3, metavar='Linear LR',
                         help='Learning rate for linear evaluation (default: 0.001)')
     parser.add_argument('--linear_epoch', type=int, default=100, metavar='Linear Epoch',
                         help='Number of epochs for linear evaluation (default: 100)')
@@ -103,6 +105,10 @@ if __name__ == '__main__':
                         help = 'help=gpu workers for the dataset (default: 2)')
     parser.add_argument('--labeled_ratio', type=float, default=0.3, metavar='labeleded ratio',
                         help = 'ratio of the labeled data in the linear evaluation')
+    parser.add_argument('--le_random_seed', type=int, default=42, metavar='Linear Evalutaion Random Seed',
+                        help = 'The radom seed for train/test split in the linear evaluator')
+    parser.add_argument('--linear_batch_size', type=int, default=512, metavar='Linear Evalutaion Batch Size',
+                        help = 'Linear Evalutaion Batch Size default = 512')
 
 
 
