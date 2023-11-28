@@ -1,7 +1,7 @@
 from torch.nn.functional import cosine_similarity
 from tqdm import tqdm
 import os, copy, torch
-from data.datasets import PACSDataset, target_domain_data, get_augmentations_linear
+from data.datasets import PACSDataset, get_augmentations_linear, get_augmentations_linear_eval
 from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader, Dataset, random_split
 from models import  LinearClassifier
@@ -73,10 +73,9 @@ def linear_evaluation(args,global_model,device):
     # Load the target domain dataset
 
     if args.dataset.lower() == 'pacs':
-        target_domain_dataset = target_domain_data(root=f'{args.dataroot}/{args.test_domain}/', transform=get_augmentations_linear(args.dataset.lower()))
-        train_size = int(args.labeled_ratio * len(target_domain_dataset))
-        test_size = len(target_domain_dataset) - train_size
-        train_dataset, test_dataset = random_split(target_domain_dataset, [train_size, test_size], generator=torch.Generator().manual_seed(args.le_random_seed)) # added a manual seed so taht the same images will be selected for training of the linear evaluator
+
+        train_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = True)
+        test_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = False)
 
         train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
         test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
@@ -85,7 +84,7 @@ def linear_evaluation(args,global_model,device):
 
     # Instantiate the linear classifier
     input_dim = 512   # Assuming the output dimension of the global model's feature extractor is 512
-    num_classes = len(target_domain_dataset.classes)  # Number of classes in the target domain
+    num_classes = len(train_dataset.classes)  # Number of classes in the target domain
     linear_classifier = LinearClassifier(input_dim, num_classes).to(device)
 
     # Loss and optimizer

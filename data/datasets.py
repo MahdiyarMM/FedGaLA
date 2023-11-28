@@ -32,25 +32,116 @@ def get_augmentations_linear(dataset_name = 'pacs'):
             transforms.ToTensor(),
         ])
         return augmentation
+    
+def get_augmentations_linear_eval(dataset_name = 'pacs'):
+    if dataset_name == "pacs":
+    
+        augmentation = transforms.Compose([
+            transforms.Resize(size=32),
+            transforms.ToTensor(),
+        ])
+        return augmentation
+
+# class PACSDataset(Dataset):
+#     def __init__(self, root, transform=None):
+#         self.dataset = ImageFolder(root=root)
+#         self.transform = transform
+
+#     def __len__(self):
+#         return len(self.dataset)
+
+#     def __getitem__(self, idx):
+#         image, _ = self.dataset[idx]
+#         image1 = self.transform(image) if self.transform else image
+#         image2 = self.transform(image) if self.transform else image
+#         return image1, image2
+
+# def load_pacs_dataset(domain):
+#     dataset_path = f'./PACS/{domain}/'
+#     dataset = PACSDataset(root=dataset_path, transform=get_augmentations())
+#     return DataLoader(dataset, batch_size=128, shuffle=True, num_workers=2)
+    
+# def target_domain_data(root,transform):
+#     return ImageFolder(root=root, transform = transform)
+
+
+
+import numpy as np
+import cv2
+from glob import glob
+import pandas as pd
+import os
+from PIL import Image
+from data.datasets import get_augmentations, get_augmentations_linear_eval
+from torchvision import datasets, models, transforms
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision.datasets import ImageFolder
+import matplotlib.pyplot as plt
+from copy import deepcopy
+
+def show_tensor_img(img):
+    img = img.detach().cpu()
+    if img.ndim == 4:
+        img = img[0]
+    img = img.permute(1,2,0)
+
+    img = img - img.min()
+    img = img / img.max()
+
+    return img
 
 class PACSDataset(Dataset):
-    def __init__(self, root, transform=None):
-        self.dataset = ImageFolder(root=root)
+
+    """PACS Dataset"""
+
+    def __init__(self, root = "/media/milad/DATA/Federated/data/PACS", transform=None, domain = "A", labeled_ratio = None, linear_train = True):
+        """
+        Arguments:
+            root (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        self.root = root
+        self.linear_train = linear_train
         self.transform = transform
+        self.domains_dict = {"A" : "art_painting", "C": "cartoon", "P": "photo", "S" :"sketch"}
+        self.df = pd.read_csv(os.path.join(root, 'pacs.csv'))
+        self.df = self.df[self.df['domain'] == self.domains_dict[domain.upper()]]
+        
+    
+        self.classes = os.listdir(os.path.join(root , self.domains_dict[domain.upper()]))
+        self.numerical2cat_dict = {self.classes.index(cat) : cat for cat in self.classes}
+        self.cat2numerical_dict = {v:k for k,v in self.numerical2cat_dict.items()}
+
+
+        self.label_ratio = labeled_ratio
+        if self.label_ratio is not None:
+            if self.linear_train:
+                self.df = self.df.iloc[:int(self.label_ratio * len(self.df))]
+            else:
+                self.df = self.df.iloc[int(self.label_ratio * len(self.df)):]
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.df)
 
     def __getitem__(self, idx):
-        image, _ = self.dataset[idx]
-        image1 = self.transform(image) if self.transform else image
-        image2 = self.transform(image) if self.transform else image
-        return image1, image2
 
-def load_pacs_dataset(domain):
-    dataset_path = f'./PACS/{domain}/'
-    dataset = PACSDataset(root=dataset_path, transform=get_augmentations())
-    return DataLoader(dataset, batch_size=128, shuffle=True, num_workers=2)
-    
-def target_domain_data(root,transform):
-    return ImageFolder(root=root, transform = transform)
+        
+
+        img, domain, cat = self.df['data'].iloc[idx], self.df['domain'].iloc[idx], self.df['cat'].iloc[idx]
+
+        if self.label_ratio is None:
+            img1 = Image.open(os.path.join(self.root, img))
+            img2 = deepcopy(img1)
+
+            # img1.show()
+            if self.transform is not None:
+                img1 = self.transform(img1)
+                img2 = self.transform(img2)
+            return img1, img2
+        
+        else:
+            img1 = Image.open(os.path.join(self.root, img))
+            if self.transform is not None:
+                img1 = self.transform(img1)
+            return img1, self.cat2numerical_dict[cat]

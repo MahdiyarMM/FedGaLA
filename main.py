@@ -1,7 +1,7 @@
 from models import SimCLR, NT_XentLoss, Model, LinearClassifier
 import torch
 import copy
-from data.datasets import PACSDataset, load_pacs_dataset, get_augmentations, target_domain_data
+from data.datasets import PACSDataset,  get_augmentations
 import torch.optim as optim
 import os
 from torch.utils.data import DataLoader, Dataset, random_split
@@ -35,7 +35,7 @@ def main(args):
         source_domains = [domain for domain in domains if domain not in target_domain]
         print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
 
-        source_dataloader = {domain: DataLoader(PACSDataset(root=f'{args.dataroot}/{domain}/', transform=get_augmentations(dataset_name=args.dataset.lower())), batch_size=args.batch_size, shuffle=True, num_workers=args.workers) for domain in source_domains}
+        source_dataloader = {domain: DataLoader(PACSDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name=args.dataset.lower())), batch_size=args.batch_size, shuffle=True, num_workers=args.workers) for domain in source_domains}
         total_samples = sum(len(dataset) for dataset in source_dataloader.values())
         domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
  
@@ -97,7 +97,7 @@ if __name__ == '__main__':
                 help='Which client level method to use (default: None) [None, Delta]')
     parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
                 help='Dataset to train on (default: pacs) [pacs, homeoffice]')
-    parser.add_argument('--test_domain', type=str, default='photo', metavar='Domain',
+    parser.add_argument('--test_domain', type=str, default='p', metavar='Domain',
                         help='What domain to test on (default: photo)')
     parser.add_argument('--dataroot', type=str, default='./data/PACS/', metavar='Dataset Root Path',
                         help='The absolute path containing the selected dataset (default: photo)')
