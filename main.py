@@ -1,4 +1,4 @@
-from models import SimCLR, NT_XentLoss, Model, LinearClassifier
+from models import SimCLR, NT_XentLoss, LinearClassifier
 import torch
 import copy
 from data.datasets import PACSDataset,  get_augmentations
@@ -15,7 +15,7 @@ def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Initialize global model with custom ResNet
-    global_model = SimCLR(backbone=Model()).to(device)
+    global_model = SimCLR().to(device)
     criterion = NT_XentLoss(temperature=0.5, device=device)
 
     # Initialize a variable to store the previous global model weights
@@ -35,7 +35,7 @@ def main(args):
         source_domains = [domain for domain in domains if domain not in target_domain]
         print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
 
-        source_dataloader = {domain: DataLoader(PACSDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name=args.dataset.lower())), batch_size=args.batch_size, shuffle=True, num_workers=args.workers) for domain in source_domains}
+        source_dataloader = {domain: DataLoader(PACSDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name=args.dataset.lower())), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
         total_samples = sum(len(dataset) for dataset in source_dataloader.values())
         domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
  

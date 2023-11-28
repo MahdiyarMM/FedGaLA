@@ -8,6 +8,7 @@ from models import  LinearClassifier
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
+from models import info_nce_loss, loss_fn
 
 def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None):
     client_model.train()
@@ -18,8 +19,12 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
             total_samples += batch_size
             images1, images2 = images1.to(device), images2.to(device)
             optimizer.zero_grad()
-            z_i, z_j = client_model(images1), client_model(images2)
-            loss = criterion(z_i, z_j)
+            images12 = torch.cat((images1, images2), dim=0)
+            # z_i, z_j = client_model(images1), client_model(images2)
+            # loss = criterion(z_i, z_j)
+            features = client_model(images12)
+            logits, labels = info_nce_loss(args, features, device)
+            loss = loss_fn(logits, labels)
             loss.backward()
 
             # Compute cosine similarity and update conditionally
@@ -83,7 +88,7 @@ def linear_evaluation(args,global_model,device):
     
 
     # Instantiate the linear classifier
-    input_dim = 512   # Assuming the output dimension of the global model's feature extractor is 512
+    input_dim = 2048   # Assuming the output dimension of the global model's feature extractor is 512
     num_classes = len(train_dataset.classes)  # Number of classes in the target domain
     linear_classifier = LinearClassifier(input_dim, num_classes).to(device)
 
