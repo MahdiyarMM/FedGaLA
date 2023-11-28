@@ -93,7 +93,7 @@ if __name__ == '__main__':
                         help='Number of epochs for linear evaluation (default: 100)')
     parser.add_argument('--aggregation', type=str, default="FedAVG", metavar='Aggregation Method',
                     help='Which aggregation method to use (default: FedAVG) [FedAVG, FedDR]')
-    parser.add_argument('--clinet_gm', type=str, default="None", metavar='Clinet gradient manipulation',
+    parser.add_argument('--client_gm', type=str, default="None", metavar='Client gradient manipulation',
                 help='Which client level method to use (default: None) [None, Delta]')
     parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
                 help='Dataset to train on (default: pacs) [pacs, homeoffice]')
