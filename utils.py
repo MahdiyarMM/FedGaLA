@@ -33,7 +33,7 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
                     grad = param.grad
                     if grad is not None and name in model_delta:
                         sim = cosine_similarity(grad.view(1, -1), model_delta[name].view(1, -1))
-                        if sim < 0:
+                        if sim < args.delta_threshold:
                             param.grad = None  # Discard the gradient
 
             optimizer.step()
@@ -61,7 +61,7 @@ def federated_averaging(args, global_model, client_models, domain_weights, previ
 
     torch.save(previous_global_model_weights, os.path.join(args.model_save_path, f'previous_global_model.pth'))
 
-    print("Federated training completed.")
+    print("Federated aggregation completed.")
     return model_delta
 
 def linear_evaluation(args,global_model,device):
@@ -130,3 +130,80 @@ def linear_evaluation(args,global_model,device):
             correct += (predicted == labels).sum().item()
 
     print(f'Accuracy of the linear classifier on the {args.test_domain} images: {np.round(100 * correct / total, 3)}%')
+
+
+
+def Aggregation_by_Alignment(args, global_model, client_models, domain_weights, previous_global_model_weights):
+    global_state_dict = global_model.state_dict()
+    if previous_global_model_weights is not None:
+        previous_global_model_weights = copy.deepcopy(global_state_dict)
+
+
+
+    for k in global_state_dict.keys():
+        parame_vector = torch.cat([client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)*domain_weights[domain] for domain in client_models], dim=0)
+        weightes = AbyA(parame_vector, num_iter=args.abya_iter, gamma=args.gamma)
+        print("current weights", weightes)
+        weighted_sum = sum(client_models[domain].state_dict()[k].float() * weightes[i] 
+                           for i, domain in enumerate(client_models))
+        global_state_dict[k] = weighted_sum
+        global_state_dict[k] = weighted_sum.reshape(global_state_dict[k].shape)
+
+
+    
+    global_model.load_state_dict(global_state_dict)
+    for client_model in client_models.values():
+        client_model.load_state_dict(global_model.state_dict())
+    torch.save(global_model.state_dict(), os.path.join(args.model_save_path, f'global_model.pth'))
+
+    if previous_global_model_weights is not None:
+        model_delta = {k: global_state_dict[k] - previous_global_model_weights[k] for k in global_state_dict}
+    else:
+        model_delta = None
+        previous_global_model_weights = copy.deepcopy(global_state_dict)
+
+    torch.save(previous_global_model_weights, os.path.join(args.model_save_path, f'previous_global_model.pth'))
+
+    print("Federated training completed.")
+    return model_delta
+
+
+
+def AbyA(vectors, num_iter=3, gamma=0):
+    """
+    Aggregates the vectors using a aggrement.
+
+    Args:
+    - vectors (torch.Tensor): The input vectors of shape (m, n).
+    - num_iter (int): Number of iterations.
+    - gamma (float): hyperparametr stes the weight of AbyA.
+
+    Returns:
+    - torch.Tensor: The aggregated vector (1-gmma)AbyA + gamma*avg.
+    """
+    # Initial aggregation as the mean of the vectors
+    current_agg = torch.mean(vectors, dim=0)
+    avg = current_agg.clone()
+    weights = torch.ones(vectors.size(0))/vectors.size(0)
+    weights = weights.to(vectors.device)
+
+    avg_weights = weights.clone()
+    for i in range(num_iter):
+        # distances = torch.norm(vectors - current_agg, dim=1)
+     
+        cosine_similarities = torch.nn.functional.cosine_similarity(vectors, current_agg.unsqueeze(0).repeat(vectors.size(0), 1), dim=1)
+        cosine_similarities = (cosine_similarities+1)/2
+        # print(cosine_similarities)
+        weights = torch.abs(cosine_similarities)
+
+        # Weight inversely proportional to the distance (closer vectors have more influence)
+        # weights = 1 / (distances + 1e-6)  # Adding a small value to avoid division by zero
+        # dot_products = torch.matmul(vectors, current_agg)
+        # weights = torch.abs(dot_products)
+        # weights = torch.abs(cosine_similarities)
+        
+        weights /= torch.sum(weights)  # Normalize weights to sum up to 1
+        
+        # Update the aggregation
+        current_agg = torch.sum(vectors * weights.unsqueeze(1), dim=0)
+    return (1-gamma)*weights + gamma*avg_weights
