@@ -5,7 +5,7 @@ from data.datasets import PACSDataset,  get_augmentations
 import torch.optim as optim
 import os
 from torch.utils.data import DataLoader, Dataset, random_split
-from utils import client_update, federated_averaging, linear_evaluation
+from utils import client_update, federated_averaging, linear_evaluation, Aggregation_by_Alignment
 from torchvision import datasets, models, transforms
 import torch.nn as nn
 import argparse
@@ -64,7 +64,11 @@ def main(args):
             client_update(args, client_models[domain], optimizers[domain], source_dataloader[domain], criterion, device, model_delta=model_delta)
 
         # Federated averaging with domain weights
-        model_delta = federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights)
+        if args.aggregation.lower() == "fedavg":
+            model_delta = federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights)
+        elif args.aggregation.lower() == "abya":
+            model_delta = Aggregation_by_Alignment(args, global_model, client_models, domain_weights, previous_global_model_weights)
+
         if comm_round % 10 == 0:
             linear_evaluation(args,global_model,device)
         
@@ -92,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--linear_epoch', type=int, default=100, metavar='Linear Epoch',
                         help='Number of epochs for linear evaluation (default: 100)')
     parser.add_argument('--aggregation', type=str, default="FedAVG", metavar='Aggregation Method',
-                    help='Which aggregation method to use (default: FedAVG) [FedAVG, FedDR]')
+                    help='Which aggregation method to use (default: FedAVG) [FedAVG, AbyA]')
     parser.add_argument('--client_gm', type=str, default="None", metavar='Client gradient manipulation',
                 help='Which client level method to use (default: None) [None, Delta]')
     parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
@@ -109,7 +113,12 @@ if __name__ == '__main__':
                         help = 'The radom seed for train/test split in the linear evaluator')
     parser.add_argument('--linear_batch_size', type=int, default=512, metavar='Linear Evalutaion Batch Size',
                         help = 'Linear Evalutaion Batch Size default = 512')
-
+    parser.add_argument('--gamma', type=float, default=0, metavar='Gamma fo AbyA',
+                        help = 'Gamma fo AbyA default = 0 (0<gmma<1)')
+    parser.add_argument('--abya_iter', type=int, default=3, metavar='AbyA Iteration',
+                        help = 'AbyA Iteration default = 3')
+    parser.add_argument('--Delta_threshold', type=float, default=-0.1, metavar='Delta th',
+                        help = 'Delta th default = -0.1')
 
 
 
