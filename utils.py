@@ -9,6 +9,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from models import info_nce_loss, loss_fn
+import wandb
 
 def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None):
     client_model.train()
@@ -128,7 +129,8 @@ def linear_evaluation(args,global_model,device):
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-
+    if args.wandb:
+        wandb.log({'Accuracy': np.round(100 * correct / total, 3)})
     print(f'Accuracy of the linear classifier on the {args.test_domain} images: {np.round(100 * correct / total, 3)}%')
 
 
