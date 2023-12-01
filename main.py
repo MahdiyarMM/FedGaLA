@@ -14,7 +14,7 @@ import wandb
 
 def main(args):
     if args.wandb is not None:
-        wandb.init(project='Fed_DG',name=args.wandb)
+        wandb.init(project='Fed_DG',name=args.wandb, config=args)
 
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
