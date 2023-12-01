@@ -9,9 +9,14 @@ from utils import client_update, federated_averaging, linear_evaluation, Aggrega
 from torchvision import datasets, models, transforms
 import torch.nn as nn
 import argparse
+import wandb
 
 
 def main(args):
+    if args.wandb is not None:
+        wandb.init(project='Fed_DG',name=args.wandb)
+
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Initialize global model with custom ResNet
@@ -117,9 +122,10 @@ if __name__ == '__main__':
                         help = 'Gamma fo AbyA default = 0 (0<gmma<1)')
     parser.add_argument('--abya_iter', type=int, default=3, metavar='AbyA Iteration',
                         help = 'AbyA Iteration default = 3')
-    parser.add_argument('--Delta_threshold', type=float, default=-0.1, metavar='Delta th',
+    parser.add_argument('--delta_threshold', type=float, default=-0.1, metavar='Delta th',
                         help = 'Delta th default = -0.1')
-
+    parser.add_argument('--wandb', type=str, default=None, metavar='wandb',
+                        help = 'wandb run name (if None, no wandb)')
 
 
     args = parser.parse_args()
