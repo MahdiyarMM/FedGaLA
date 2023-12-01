@@ -150,12 +150,6 @@ class PACSDataset(Dataset):
 
 
 
-
-
-
-
-
-
 def create_dataset_df(root_dir, seed = 42, labeled_ratio = 0.1, test_domain = "real"):
     domains_dict = {k[0]:k for k in sorted(os.listdir(root_dir)) if os.path.isdir(os.path.join(root_dir, k))}
     categories_list = os.listdir(os.path.join(root_dir , list(domains_dict.values())[0]))
@@ -171,6 +165,7 @@ def create_dataset_df(root_dir, seed = 42, labeled_ratio = 0.1, test_domain = "r
             categories.extend(len(files) * [cat])
 
     df = pd.DataFrame(data = {"data" : imgs_names, "domain": domains, "cat" :  categories})
+    df['data'] = df['data'].apply(lambda x: x.replace(root_dir, ""))
     sampled_df = df[df['domain'] == 'real'].groupby('cat', group_keys=False).apply(lambda x: x.sample(frac=labeled_ratio, random_state=seed))
 
 
