@@ -1,7 +1,7 @@
 from models import SimCLR, NT_XentLoss, LinearClassifier
 import torch
 import copy
-from data.datasets import PACSDataset,  get_augmentations
+from data.datasets import PACSDataset,  get_augmentations, DomainNetDataset, HomeOfficeDataset
 import torch.optim as optim
 import os
 from torch.utils.data import DataLoader, Dataset, random_split
@@ -41,6 +41,43 @@ def main(args):
         print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
 
         source_dataloader = {domain: DataLoader(PACSDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name=args.dataset.lower())), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
+        total_samples = sum(len(dataset) for dataset in source_dataloader.values())
+        domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
+
+    
+    elif args.dataset.lower() == "domainnet":
+
+        domains_dict = {'c': 'clipart',
+                        'i': 'infograph',
+                        'p': 'painting',
+                        'q': 'quickdraw',
+                        'r': 'real',
+                        's': 'sketch'}
+        target_domain =  domains_dict[args.test_domain.lower()]
+    
+        assert args.test_domain.lower() in list("cipqrs"), "The test domain argument should be either 'C', 'I', 'P', 'Q', 'R' or 'S' when dataset == domainnet"
+        args.test_domain = target_domain
+
+        source_domains = [domain for domain in domains_dict.keys() if domain != target_domain[0].lower()]
+        print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
+
+        source_dataloader = {domain: DataLoader(DomainNetDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name='pacs')), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
+        total_samples = sum(len(dataset) for dataset in source_dataloader.values())
+        domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
+
+    elif args.dataset.lower() == "homeoffice":
+        assert args.test_domain.upper() in list("ACPR"), "The test domain argument should be either 'A', 'P', 'C', 'I' when dataset == homeoffice"
+        domains_dict = {'a': 'Art', 'c': 'Clipart', 'p': 'Product', 'r': 'Real World'}
+
+        target_domain =  domains_dict[args.test_domain.lower()]
+    
+        
+        args.test_domain = target_domain
+
+        source_domains = [domain for domain in domains_dict.keys() if domain != target_domain[0].lower()]
+        print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
+
+        source_dataloader = {domain: DataLoader(HomeOfficeDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name='pacs')), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
         total_samples = sum(len(dataset) for dataset in source_dataloader.values())
         domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
  

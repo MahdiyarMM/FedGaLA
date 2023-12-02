@@ -1,7 +1,7 @@
 from torch.nn.functional import cosine_similarity
 from tqdm import tqdm
 import os, copy, torch
-from data.datasets import PACSDataset, get_augmentations_linear, get_augmentations_linear_eval
+from data.datasets import PACSDataset, DomainNetDataset, HomeOfficeDataset, get_augmentations_linear, get_augmentations_linear_eval
 from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader, Dataset, random_split
 from models import  LinearClassifier
@@ -38,6 +38,7 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
                             param.grad = None  # Discard the gradient
 
             optimizer.step()
+            # break
     return client_model
 
 def federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights):
@@ -86,6 +87,20 @@ def linear_evaluation(args,global_model,device):
         train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
         test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
 
+    elif args.dataset.lower() == "domainnet":
+        train_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = True)
+        test_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = False)
+
+        train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
+        test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
+
+    elif args.dataset.lower() == "homeoffice":
+        train_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = True)
+        test_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = False)
+
+        train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
+        test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
+
     
 
     # Instantiate the linear classifier
@@ -114,6 +129,8 @@ def linear_evaluation(args,global_model,device):
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
+            # break
+        
 
 
     # Test the linear classifier
