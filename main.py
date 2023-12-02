@@ -11,8 +11,20 @@ import torch.nn as nn
 import argparse
 import wandb
 
+from datetime import datetime
+
 
 def main(args):
+    
+    if args.model_save_path is None:
+        workdir = str(datetime.now()).replace(" ", '-').replace(":", '-').split(".")[0]
+        workdir = os.path.join('workdirs', workdir)
+        os.makedirs(workdir, exist_ok=True)
+
+        args.model_save_path = workdir
+
+
+
     if args.wandb is not None:
         wandb.init(project='Fed_DG',name=args.wandb, config=args)
 
@@ -129,8 +141,8 @@ if __name__ == '__main__':
                         help='Number of communication rounds (default: 100)')
     parser.add_argument('--batch_size', type=int, default=128, metavar='Batch Size',
                         help='Batch size (default: 128)')
-    parser.add_argument('--model_save_path', type=str, default='./saved_models', metavar='save_path',
-                        help='Path to save models (default: ./saved_models')
+    parser.add_argument('--model_save_path', type=str, default= None, metavar='save_path',
+                        help='Path to save models (default: None')
     parser.add_argument('--client_epochs', type=int, default=5, metavar='client_epochs',
                         help='Number of epochs to train on each client (default: 5)')
     parser.add_argument('--linear_lr', type=float, default=3e-3, metavar='Linear LR',

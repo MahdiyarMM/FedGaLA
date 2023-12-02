@@ -2,6 +2,8 @@ data/PACS/
 *.ipynb
 wandb/
 saved_models*/
+workdirs/*
+workdirs*/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
