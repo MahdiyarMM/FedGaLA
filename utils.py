@@ -160,7 +160,10 @@ def Aggregation_by_Alignment(args, global_model, client_models, domain_weights, 
 
 
     for k in global_state_dict.keys():
-        parame_vector = torch.cat([client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)*domain_weights[domain] for domain in client_models], dim=0)
+        if previous_global_model_weights is not None:
+            parame_vector = torch.cat([(client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)-previous_global_model_weights[k])*domain_weights[domain] for domain in client_models], dim=0)
+        else:
+            parame_vector = torch.cat([client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)*domain_weights[domain] for domain in client_models], dim=0)
         weightes = AbyA(parame_vector, num_iter=args.abya_iter, gamma=args.gamma)
         weighted_sum = sum(client_models[domain].state_dict()[k].float() * weightes[i] 
                            for i, domain in enumerate(client_models))
