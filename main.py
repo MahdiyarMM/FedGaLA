@@ -32,7 +32,24 @@ def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Initialize global model with custom ResNet
-    global_model = SimCLR().to(device)
+    if args.backbone.lower() == 'resnet18':
+        from models import ResNet18
+        backbone = ResNet18()
+        print('Backbone = resnet18')
+    elif args.backbone.lower() == 'resnet34':
+        from models import ResNet34
+        backbone = ResNet34()
+        print('Backbone = resnet34')
+    elif args.backbone.lower() == 'resnet50':
+        from models import ResNet50
+        backbone = ResNet50()
+        print('Backbone = resnet50')
+    elif args.backbone.lower() == 'resnet101':
+        from models import ResNet101
+        backbone = ResNet101()
+        print('Backbone = resnet101')
+
+    global_model = SimCLR(net = backbone).to(device)
     criterion = NT_XentLoss(temperature=0.5, device=device)
 
     # Initialize a variable to store the previous global model weights
@@ -174,6 +191,8 @@ if __name__ == '__main__':
     parser.add_argument('--delta_threshold', type=float, default=-0.1, metavar='Delta th',
                         help = 'Delta th default = -0.1')
     parser.add_argument('--wandb', type=str, default=None, metavar='wandb',
+                        help = 'wandb run name (if None, no wandb)')
+    parser.add_argument('--backbone', type=str, default='ResNet18', metavar='wandb',
                         help = 'wandb run name (if None, no wandb)')
 
 
