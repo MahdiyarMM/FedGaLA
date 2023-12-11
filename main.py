@@ -192,7 +192,7 @@ if __name__ == '__main__':
                         help = 'Delta th default = -0.1')
     parser.add_argument('--wandb', type=str, default=None, metavar='wandb',
                         help = 'wandb run name (if None, no wandb)')
-    parser.add_argument('--backbone', type=str, default='ResNet18', metavar='wandb',
+    parser.add_argument('--backbone', type=str, default='ResNet18', metavar='backbone',
                         help = 'wandb run name (if None, no wandb)')
 
 
