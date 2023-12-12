@@ -10,16 +10,21 @@ from torchvision import datasets, models, transforms
 import torch.nn as nn
 import argparse
 import wandb
-
+import numpy as np
 from datetime import datetime
-
+import json
 
 def main(args):
     
     if args.model_save_path is None:
-        workdir = str(datetime.now()).replace(" ", '-').replace(":", '-').split(".")[0]
+        workdir = str(datetime.now()).replace(" ", '').replace(":", '').split(".")[0].replace("-", '')
+        workdir = '_'.join((workdir , args.dataset.upper(), args.test_domain.upper() , args.backbone.lower() ,  args.client_gm , args.aggregation ,str( args.client_epochs)))
         workdir = os.path.join('workdirs', workdir)
         os.makedirs(workdir, exist_ok=True)
+
+        cfg_file = open(os.path.join(workdir , 'cfg.json'), 'w')
+        json.dump(args.__dict__, cfg_file)
+        cfg_file.close()
 
         args.model_save_path = workdir
 
@@ -140,12 +145,23 @@ def main(args):
         elif args.aggregation.lower() == "abya":
             model_delta = Aggregation_by_Alignment(args, global_model, client_models, domain_weights, previous_global_model_weights)
 
-        if comm_round % 10 == 0:
-            linear_evaluation(args,global_model,device)
+        if args.eval_every :
+            if comm_round % args.eval_every  == 0:
+                if args.labeled_ratio_sweep:
+                    for labeled_ratio in np.linspace(0.1, 1, 10):
+                        linear_evaluation(args,global_model,device, labeled_ratio= labeled_ratio, comm_round = comm_round)
+                else:
+                    linear_evaluation(args,global_model,device, labeled_ratio= args.labeled_ratio, comm_round = comm_round)
+        # else:
+        #     if args.wandb:
+        #         wandb.log({'Accuracy': 0.0})
         
         print("############################################## End of Round ########################################")
-
-    linear_evaluation(args,global_model,device)
+    if args.labeled_ratio_sweep:
+        for labeled_ratio in np.linspace(0.1, 1, 10):
+            linear_evaluation(args,global_model,device, labeled_ratio= labeled_ratio)
+    else:
+        linear_evaluation(args,global_model,device, labeled_ratio= args.labeled_ratio)
 
 
 
@@ -178,8 +194,12 @@ if __name__ == '__main__':
                         help='The absolute path containing the selected dataset (default: photo)')
     parser.add_argument('--workers', type=int, default=2, metavar='gpu workers for the dataset',
                         help = 'help=gpu workers for the dataset (default: 2)')
-    parser.add_argument('--labeled_ratio', type=float, default=0.3, metavar='labeleded ratio',
+    parser.add_argument('--labeled_ratio', type=float, default=0.1, metavar='labeleded ratio',
                         help = 'ratio of the labeled data in the linear evaluation')
+    
+    parser.add_argument('--labeled_ratio_sweep', action='store_true',
+                        help = 'if selected, the labeled ratio will be sweeped from 0.1 to 1')
+    
     parser.add_argument('--le_random_seed', type=int, default=42, metavar='Linear Evalutaion Random Seed',
                         help = 'The radom seed for train/test split in the linear evaluator')
     parser.add_argument('--linear_batch_size', type=int, default=512, metavar='Linear Evalutaion Batch Size',
@@ -193,7 +213,10 @@ if __name__ == '__main__':
     parser.add_argument('--wandb', type=str, default=None, metavar='wandb',
                         help = 'wandb run name (if None, no wandb)')
     parser.add_argument('--backbone', type=str, default='ResNet18', metavar='backbone',
-                        help = 'wandb run name (if None, no wandb)')
+                        help = 'Selects the backbone for the simclr model (default: resnet18)')
+    parser.add_argument('--eval_every', type=int, default=10, metavar='eval',
+                        help = 'runs the linear evaluation after every given communication rounds (default = 10), pass 0 if only want to evaluate at the end')
+    
 
 
     args = parser.parse_args()

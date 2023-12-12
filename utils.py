@@ -66,7 +66,7 @@ def federated_averaging(args, global_model, client_models, domain_weights, previ
     print("Federated aggregation completed.")
     return model_delta
 
-def linear_evaluation(args,global_model,device):
+def linear_evaluation(args,global_model,device, labeled_ratio = 0.1, comm_round = None):
 
     # Load the saved global model
     model_path = os.path.join(args.model_save_path, f'global_model.pth')
@@ -81,22 +81,22 @@ def linear_evaluation(args,global_model,device):
 
     if args.dataset.lower() == 'pacs':
 
-        train_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = True)
-        test_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = False)
+        train_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = True)
+        test_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = False)
 
         train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
         test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
 
     elif args.dataset.lower() == "domainnet":
-        train_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = True)
-        test_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = False)
+        train_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = True)
+        test_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = False)
 
         train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
         test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
 
     elif args.dataset.lower() == "homeoffice":
-        train_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = True)
-        test_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= args.labeled_ratio, linear_train = False)
+        train_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = True)
+        test_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = False)
 
         train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
         test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
@@ -147,8 +147,15 @@ def linear_evaluation(args,global_model,device):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     if args.wandb:
-        wandb.log({'Accuracy': np.round(100 * correct / total, 3)})
+        wandb.log({f'Accuracy_lr_{labeled_ratio}': np.round(100 * correct / total, 3)}, step = comm_round)
+    print(f"Labeled ratio = {labeled_ratio}")
     print(f'Accuracy of the linear classifier on the {args.test_domain} images: {np.round(100 * correct / total, 3)}%')
+
+    logs_file = open(os.path.join(args.model_save_path, 'logs.txt'), "a")
+    logs_file.write(f"Labeled ratio = {labeled_ratio}\n")
+    logs_file.write(f'Accuracy of the linear classifier on the {args.test_domain} images: {np.round(100 * correct / total, 3)}%')
+    logs_file.write("\n")
+    logs_file.close()
 
 
 
