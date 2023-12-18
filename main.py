@@ -158,7 +158,7 @@ def main(args):
         
         print("############################################## End of Round ########################################")
     if args.labeled_ratio_sweep:
-        for labeled_ratio in np.linspace(0.1, 1, 10):
+        for labeled_ratio in np.linspace(0.1, 0.9, 9):
             linear_evaluation(args,global_model,device, labeled_ratio= labeled_ratio)
     else:
         linear_evaluation(args,global_model,device, labeled_ratio= args.labeled_ratio)
