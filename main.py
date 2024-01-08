@@ -155,7 +155,7 @@ def main(args):
         if args.eval_every :
             if comm_round % args.eval_every  == 0:
                 if args.labeled_ratio_sweep:
-                    for labeled_ratio in np.linspace(0.1, 1, 10):
+                    for labeled_ratio in np.linspace(0.1, 0.9, 9):
                         linear_evaluation(args,global_model,device, labeled_ratio= labeled_ratio, comm_round = comm_round)
                 else:
                     linear_evaluation(args,global_model,device, labeled_ratio= args.labeled_ratio, comm_round = comm_round)
@@ -165,7 +165,7 @@ def main(args):
         
         print("############################################## End of Round ########################################")
     if args.labeled_ratio_sweep:
-        for labeled_ratio in np.linspace(0.1, 1, 10):
+        for labeled_ratio in np.linspace(0.1, 0.9, 9):
             linear_evaluation(args,global_model,device, labeled_ratio= labeled_ratio)
     else:
         linear_evaluation(args,global_model,device, labeled_ratio= args.labeled_ratio)
@@ -221,7 +221,7 @@ if __name__ == '__main__':
                         help = 'wandb run name (if None, no wandb)')
     parser.add_argument('--backbone', type=str, default='ResNet18', metavar='backbone',
                         help = 'Selects the backbone for the simclr model (default: resnet18)')
-    parser.add_argument('--eval_every', type=int, default=10, metavar='eval',
+    parser.add_argument('--eval_every', type=int, default=0, metavar='eval',
                         help = 'runs the linear evaluation after every given communication rounds (default = 10), pass 0 if only want to evaluate at the end')
     parser.add_argument('--SSL', type=str, default='SimCLR', metavar='SSL',
                         help = 'Selects the SSL method (default: SimCLR) [SimCLR, MoCo]')
