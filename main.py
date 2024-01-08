@@ -1,4 +1,4 @@
-from models import SimCLR, NT_XentLoss, LinearClassifier
+from models import SimCLR, NT_XentLoss, LinearClassifier, MoCo
 import torch
 import copy
 from data.datasets import PACSDataset,  get_augmentations, DomainNetDataset, HomeOfficeDataset
@@ -54,8 +54,12 @@ def main(args):
         backbone = ResNet101()
         print('Backbone = resnet101')
 
-    global_model = SimCLR(net = backbone).to(device)
-    criterion = NT_XentLoss(temperature=0.5, device=device)
+    if args.SSL.lower() == 'simclr':
+        global_model = SimCLR(net = backbone).to(device)
+        criterion = NT_XentLoss(temperature=0.5, device=device)
+    elif args.SSL.lower() == 'moco':
+        global_model = MoCo(backbone).to(device)
+        criterion = nn.CrossEntropyLoss()
 
     # Initialize a variable to store the previous global model weights
     previous_global_model_weights = None
@@ -119,7 +123,10 @@ def main(args):
 
     # Initialize client models
     client_models = {domain: copy.deepcopy(global_model) for domain in source_domains}
-    optimizers = {domain: optim.Adam(client_models[domain].parameters(), lr=0.0001) for domain in source_domains}
+    if args.SSL.lower() == 'simclr':
+        optimizers = {domain: optim.Adam(client_models[domain].parameters(), lr=0.0001) for domain in source_domains}
+    elif args.SSL.lower() == 'moco':
+        optimizers = {domain: optim.SGD(client_models[domain].parameters(), lr=0.03, momentum=0.9, weight_decay=1e-4) for domain in source_domains}
 
 
     # Save the initial models as epoch 0
@@ -216,7 +223,8 @@ if __name__ == '__main__':
                         help = 'Selects the backbone for the simclr model (default: resnet18)')
     parser.add_argument('--eval_every', type=int, default=10, metavar='eval',
                         help = 'runs the linear evaluation after every given communication rounds (default = 10), pass 0 if only want to evaluate at the end')
-    
+    parser.add_argument('--SSL', type=str, default='SimCLR', metavar='SSL',
+                        help = 'Selects the SSL method (default: SimCLR) [SimCLR, MoCo]')
 
 
     args = parser.parse_args()

@@ -1,0 +1,3 @@
+python main.py  --test_domain a --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --wandb dg_pacs --aggregation AbyA --client_gm Delta --workers 0 --gamma 0.25
+python main.py  --test_domain a --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --wandb dg_pacs --aggregation AbyA --client_gm Delta --workers 0 --gamma 0.5
+python main.py  --test_domain a --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --wandb dg_pacs --aggregation AbyA --client_gm Delta --workers 0 --gamma 0.75

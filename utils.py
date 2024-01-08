@@ -20,12 +20,18 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
             total_samples += batch_size
             images1, images2 = images1.to(device), images2.to(device)
             optimizer.zero_grad()
-            images12 = torch.cat((images1, images2), dim=0)
-            # z_i, z_j = client_model(images1), client_model(images2)
-            # loss = criterion(z_i, z_j)
-            features = client_model(images12)
-            logits, labels = info_nce_loss(args, features, device)
-            loss = loss_fn(logits, labels)
+            
+            if args.SSL.lower() == 'simclr':
+                images12 = torch.cat((images1, images2), dim=0)
+                features = client_model(images12)
+                logits, labels = loss_fn(args, features, device)
+
+            elif args.SSL.lower() == 'moco':
+                logits, labels = client_model(images1, images2)
+                if logits==None:
+                    continue
+            
+            loss = criterion(logits, labels)
             loss.backward()
 
             # Compute cosine similarity and update conditionally
@@ -235,3 +241,5 @@ def AbyA(vectors, num_iter=3, gamma=0):
         # Update the aggregation
         current_agg = torch.sum(vectors * weights.unsqueeze(1), dim=0)
     return (1-gamma)*weights + gamma*avg_weights
+
+
