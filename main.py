@@ -1,4 +1,4 @@
-from models import SimCLR, NT_XentLoss, LinearClassifier, MoCo
+from models import SimCLR, NT_XentLoss, LinearClassifier, MoCo, SimSiam, BYOLModel
 import torch
 import copy
 from data.datasets import PACSDataset,  get_augmentations, DomainNetDataset, HomeOfficeDataset
@@ -56,10 +56,16 @@ def main(args):
 
     if args.SSL.lower() == 'simclr':
         global_model = SimCLR(net = backbone).to(device)
-        criterion = NT_XentLoss(temperature=0.5, device=device)
+        criterion = NT_XentLoss(temperature=0.5, device=device) #it uses info loss
     elif args.SSL.lower() == 'moco':
         global_model = MoCo(backbone).to(device)
         criterion = nn.CrossEntropyLoss()
+    elif args.SSL.lower() == 'simsiam':
+        global_model = SimSiam(backbone).to(device)
+        criterion = nn.CosineSimilarity(dim=1)
+    elif args.SSL.lower() == 'byol':
+        global_model = BYOLModel(backbone).to(device)
+        criterion = nn.CosineSimilarity(dim=1) #it uses byol loss
 
     # Initialize a variable to store the previous global model weights
     previous_global_model_weights = None
@@ -127,8 +133,11 @@ def main(args):
         optimizers = {domain: optim.Adam(client_models[domain].parameters(), lr=0.0001) for domain in source_domains}
     elif args.SSL.lower() == 'moco':
         optimizers = {domain: optim.SGD(client_models[domain].parameters(), lr=0.03, momentum=0.9, weight_decay=1e-4) for domain in source_domains}
-
-
+    elif args.SSL.lower() == 'simsiam':
+        optimizers = {domain: optim.SGD(client_models[domain].parameters(), lr=0.025, momentum=0.9, weight_decay=1e-4) for domain in source_domains}
+    elif args.SSL.lower() == 'byol':
+        optimizers = {domain: optim.SGD(client_models[domain].parameters(), lr=0.03, momentum=0.9, weight_decay=1e-4) for domain in source_domains}
+        
     # Save the initial models as epoch 0
     model_save_path = args.model_save_path
     if not os.path.exists(model_save_path):

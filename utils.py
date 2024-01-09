@@ -8,7 +8,7 @@ from models import  LinearClassifier
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from models import info_nce_loss, loss_fn
+from models import info_nce_loss, loss_fn, byol_loss_fn
 import wandb
 
 def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None):
@@ -24,14 +24,26 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
             if args.SSL.lower() == 'simclr':
                 images12 = torch.cat((images1, images2), dim=0)
                 features = client_model(images12)
-                logits, labels = loss_fn(args, features, device)
+                logits, labels = info_nce_loss(args, features, device)
+                loss = loss_fn(logits, labels)
 
             elif args.SSL.lower() == 'moco':
                 logits, labels = client_model(images1, images2)
                 if logits==None:
                     continue
+                loss = criterion(logits, labels)
+
+            elif args.SSL.lower() == 'simsiam':
+                p1, p2, z1, z2 = client_model(images1, images2)
+                loss = -(criterion(p1, z2).mean() + criterion(p2, z1).mean()) * 0.5
+
+            elif args.SSL.lower() == 'byol':
+                online_pred_one, target_proj_two, online_pred_two, target_proj_one = client_model(images1, images2)
+                loss_one = byol_loss_fn(online_pred_one, target_proj_two)
+                loss_two = byol_loss_fn(online_pred_two, target_proj_one)
+                loss = loss_one + loss_two
+                loss = loss.mean()
             
-            loss = criterion(logits, labels)
             loss.backward()
 
             # Compute cosine similarity and update conditionally
