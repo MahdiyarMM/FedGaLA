@@ -18,7 +18,7 @@ def main(args):
     
     if args.model_save_path is None:
         workdir = str(datetime.now()).replace(" ", '').replace(":", '').split(".")[0].replace("-", '')
-        workdir = '_'.join((workdir , args.dataset.upper(), args.test_domain.upper() , args.backbone.lower() ,  args.client_gm , args.aggregation ,str( args.client_epochs)))
+        workdir = '_'.join((workdir , args.dataset.upper(), args.test_domain.upper() , args.backbone.lower() ,  args.client_gm , args.aggregation ,str( args.client_epochs)), args.SSL)
         workdir = os.path.join('workdirs', workdir)
         os.makedirs(workdir, exist_ok=True)
 
