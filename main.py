@@ -66,6 +66,9 @@ def main(args):
     elif args.SSL.lower() == 'byol':
         global_model = BYOLModel(backbone).to(device)
         criterion = nn.CosineSimilarity(dim=1) #it uses byol loss
+    else:
+        print("Error: Please select one of the following SSL methods: ['SimCLR', 'MoCo', 'SimSiam', 'BYOL']")
+        exit()
 
     # Initialize a variable to store the previous global model weights
     previous_global_model_weights = None

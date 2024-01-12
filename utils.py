@@ -198,8 +198,13 @@ def Aggregation_by_Alignment(args, global_model, client_models, domain_weights, 
 
     
     global_model.load_state_dict(global_state_dict)
-    for client_model in client_models.values():
-        client_model.load_state_dict(global_model.state_dict())
+    if args.SSL.lower() == 'byol':
+        for client_model in client_models.values():
+            client_model.backbone.load_state_dict(global_model.backbone.state_dict())
+    else:
+        for client_model in client_models.values():
+            client_model.load_state_dict(global_model.state_dict())
+
     torch.save(global_model.state_dict(), os.path.join(args.model_save_path, f'global_model.pth'))
 
     if previous_global_model_weights is not None:
