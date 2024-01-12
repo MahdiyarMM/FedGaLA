@@ -170,7 +170,7 @@ def linear_evaluation(args,global_model,device, labeled_ratio = 0.1, comm_round 
     print(f'Accuracy of the linear classifier on the {args.test_domain} images: {np.round(100 * correct / total, 3)}%')
 
     logs_file = open(os.path.join(args.model_save_path, 'logs.txt'), "a")
-    logs_file.write(f"Labeled ratio = {labeled_ratio}\n")
+    logs_file.write(f"Labeled ratio = {labeled_ratio} || comm round = {comm_round} || ")
     logs_file.write(f'Accuracy of the linear classifier on the {args.test_domain} images: {np.round(100 * correct / total, 3)}%')
     logs_file.write("\n")
     logs_file.close()
