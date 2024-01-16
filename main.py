@@ -16,17 +16,21 @@ import json
 
 def main(args):
     
+    # if args.model_save_path is None:
+    
+    workdir = str(datetime.now()).replace(" ", '').replace(":", '').split(".")[0].replace("-", '')
+    workdir = '_'.join((workdir , args.dataset.upper(), args.test_domain.upper() , args.backbone.lower() ,  args.client_gm , args.aggregation ,str( args.client_epochs), args.SSL))
+    
     if args.model_save_path is None:
-        workdir = str(datetime.now()).replace(" ", '').replace(":", '').split(".")[0].replace("-", '')
-        workdir = '_'.join((workdir , args.dataset.upper(), args.test_domain.upper() , args.backbone.lower() ,  args.client_gm , args.aggregation ,str( args.client_epochs), args.SSL))
         workdir = os.path.join('workdirs', workdir)
-        os.makedirs(workdir, exist_ok=True)
+    else:
+        workdir = os.path.join(args.model_save_path, 'workdirs', workdir)
+    os.makedirs(workdir, exist_ok=True)
 
-        cfg_file = open(os.path.join(workdir , 'cfg.json'), 'w')
-        json.dump(args.__dict__, cfg_file)
-        cfg_file.close()
-
-        args.model_save_path = workdir
+    cfg_file = open(os.path.join(workdir , 'cfg.json'), 'w')
+    json.dump(args.__dict__, cfg_file)
+    cfg_file.close()
+    args.model_save_path = workdir
 
 
 
