@@ -154,15 +154,21 @@ def main(args):
         print(f"Communication Round {comm_round + 1}/{args.communication_rounds}")
 
         # Train each client on its domain data
-        for domain in source_domains:
+        for i, domain in enumerate(source_domains):
             print(f"Training on domain: {domain} ...")
-            client_update(args, client_models[domain], optimizers[domain], source_dataloader[domain], criterion, device, model_delta=model_delta)
+            disc_log=False
+            if i == 0  and args.disc_log:
+                disc_log=True
+
+            client_update(args, client_models[domain], optimizers[domain], source_dataloader[domain], criterion, device, model_delta=model_delta, disc_log=disc_log)
 
         # Federated averaging with domain weights
         if args.aggregation.lower() == "fedavg":
             model_delta = federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights)
+            previous_global_model_weights = 1
         elif args.aggregation.lower() == "abya":
             model_delta = Aggregation_by_Alignment(args, global_model, client_models, domain_weights, previous_global_model_weights)
+            previous_global_model_weights = 1
 
         if args.eval_every :
             if comm_round % args.eval_every  == 0:
@@ -237,6 +243,8 @@ if __name__ == '__main__':
                         help = 'runs the linear evaluation after every given communication rounds (default = 10), pass 0 if only want to evaluate at the end')
     parser.add_argument('--SSL', type=str, default='SimCLR', metavar='SSL',
                         help = 'Selects the SSL method (default: SimCLR) [SimCLR, MoCo]')
+    parser.add_argument('--disc_log', type=bool, default=False, metavar='dl',
+                        help = 'if True, the discard rate will be logged (default: False)')
 
 
     args = parser.parse_args()
