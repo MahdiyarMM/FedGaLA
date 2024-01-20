@@ -11,10 +11,12 @@ import numpy as np
 from models import info_nce_loss, loss_fn, byol_loss_fn
 import wandb
 
-def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None):
+def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None, disc_log=False):
     client_model.train()
     total_samples = 0
     for epoch in tqdm(range(args.client_epochs)):
+        discard = 0
+        total = 0
         for images1, images2 in train_loader:
             batch_size = images1.size(0)
             total_samples += batch_size
@@ -47,16 +49,21 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
             loss.backward()
 
             # Compute cosine similarity and update conditionally
-            if model_delta is not None and args.clinet_gm == 'Delta':
+            if model_delta is not None and args.client_gm == 'Delta':
                 for name, param in client_model.named_parameters():
                     grad = param.grad
                     if grad is not None and name in model_delta:
+                        total += 1
                         sim = cosine_similarity(grad.view(1, -1), model_delta[name].view(1, -1))
                         if sim < args.delta_threshold:
                             param.grad = None  # Discard the gradient
+                            discard += 1
 
             optimizer.step()
             # break
+        if (model_delta is not None) and disc_log and (args.wandb is not None):
+            if args.wandb:
+                wandb.log({f'discard_rate': np.round(100 * discard / total, 3)})
     return client_model
 
 def federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights):
@@ -191,7 +198,7 @@ def Aggregation_by_Alignment(args, global_model, client_models, domain_weights, 
 
     for k in global_state_dict.keys():
         if previous_global_model_weights is not None:
-            parame_vector = torch.cat([(client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)-previous_global_model_weights[k])*domain_weights[domain] for domain in client_models], dim=0)
+            parame_vector = torch.cat([(client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)-previous_global_model_weights[k].float().flatten().unsqueeze(0))*domain_weights[domain] for domain in client_models], dim=0)
         else:
             parame_vector = torch.cat([client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)*domain_weights[domain] for domain in client_models], dim=0)
         weightes = AbyA(parame_vector, num_iter=args.abya_iter, gamma=args.gamma)
