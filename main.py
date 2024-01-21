@@ -112,7 +112,7 @@ def main(args):
         source_domains = [domain for domain in domains_dict.keys() if domain != target_domain[0].lower()]
         print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
 
-        source_dataloader = {domain: DataLoader(DomainNetDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name='pacs')), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
+        source_dataloader = {domain: DataLoader(DomainNetDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name='domainnet')), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
         total_samples = sum(len(dataset) for dataset in source_dataloader.values())
         domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
 
