@@ -4,6 +4,7 @@ from torchvision.datasets import ImageFolder
 
 
 def get_augmentations(dataset_name = 'pacs'):
+    print("dataset name: ", dataset_name)
     if dataset_name == "pacs":
         s = 1
         color_jitter = transforms.ColorJitter(
@@ -16,7 +17,18 @@ def get_augmentations(dataset_name = 'pacs'):
             transforms.RandomGrayscale(p=0.2),
             transforms.ToTensor(),
         ])
-        return augmentation
+    if dataset_name == 'domainnet':
+        s = 1
+        color_jitter = transforms.ColorJitter(
+            0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
+        )
+        augmentation = transforms.Compose([
+            transforms.RandomResizedCrop(size=32, antialias=True),
+            transforms.RandomHorizontalFlip(),  # with 0.5 probability
+            transforms.RandomApply([color_jitter], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+        ])    
+    return augmentation
 
 def get_augmentations_linear(dataset_name = 'pacs'):
     if dataset_name == "pacs":
@@ -32,6 +44,18 @@ def get_augmentations_linear(dataset_name = 'pacs'):
             transforms.ToTensor(),
         ])
         return augmentation
+    elif dataset_name == "domainnet":
+        s = 1
+        color_jitter = transforms.ColorJitter(
+            0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
+        )
+        augmentation = transforms.Compose([
+            transforms.RandomResizedCrop(size=32, antialias=True),
+            transforms.RandomHorizontalFlip(),  # with 0.5 probability
+            transforms.RandomApply([color_jitter], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+        ])
+        return augmentation
     
 def get_augmentations_linear_eval(dataset_name = 'pacs'):
     if dataset_name == "pacs":
@@ -39,6 +63,13 @@ def get_augmentations_linear_eval(dataset_name = 'pacs'):
         augmentation = transforms.Compose([
             transforms.Resize((32,32)),
             transforms.ToTensor(),
+        ])
+        return augmentation
+    elif dataset_name == "domainnet":
+    
+        augmentation = transforms.Compose([
+            transforms.Resize((32,32), antialias=True),
+            # transforms.ToTensor(),
         ])
         return augmentation
 
@@ -282,6 +313,8 @@ class DomainNetDataset(Dataset):
         print(f"Loading images for domain {domain}")
         for idx, img_name in enumerate(self.df['data']):
             img = Image.open(os.path.join(self.root, img_name))
+            img = transforms.ToTensor()(img)
+            
             self.img_list.append(img)
             if idx % 30000 == 0:
                 print(f'{idx} images have been loaded')
@@ -305,9 +338,14 @@ class DomainNetDataset(Dataset):
             return img1, img2
         
         else:
-            img1 = Image.open(os.path.join(self.root, img))
+            
+            img1 = self.img_list[idx]
             if self.transform is not None:
                 img1 = self.transform(img1)
+                     
+            # img1 = Image.open(os.path.join(self.root, img))
+            # if self.transform is not None:
+            #     img1 = self.transform(img1)
             return img1, self.cat2numerical_dict[cat]
 
 
@@ -355,8 +393,6 @@ class HomeOfficeDataset(Dataset):
         return len(self.df)
 
     def __getitem__(self, idx):
-
-        
 
         img, domain, cat = self.df['data'].iloc[idx], self.df['domain'].iloc[idx], self.df['cat'].iloc[idx]
         # print(os.path.join(self.root, img))
