@@ -272,3 +272,83 @@ def AbyA(vectors, num_iter=3, gamma=0):
     return (1-gamma)*weights + gamma*avg_weights
 
 
+def FedEMA(args, global_model, client_models, domain_weights, previous_global_model_weights):
+    if args.SSL.lower() != 'byol':
+        raise ValueError('FedEMA is only supported for BYOL')
+    
+    if args.FedEMA_abya:
+        global_state_dict = global_model.state_dict()
+        if previous_global_model_weights is not None:
+            previous_global_model_weights = copy.deepcopy(global_state_dict)
+
+
+
+        for k in global_state_dict.keys():
+            if previous_global_model_weights is not None:
+                parame_vector = torch.cat([(client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)-previous_global_model_weights[k].float().flatten().unsqueeze(0))*domain_weights[domain] for domain in client_models], dim=0)
+            else:
+                parame_vector = torch.cat([client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)*domain_weights[domain] for domain in client_models], dim=0)
+            weightes = AbyA(parame_vector, num_iter=args.abya_iter, gamma=args.gamma)
+            weighted_sum = sum(client_models[domain].state_dict()[k].float() * weightes[i] 
+                            for i, domain in enumerate(client_models))
+            global_state_dict[k] = weighted_sum
+            global_state_dict[k] = weighted_sum.reshape(global_state_dict[k].shape)
+
+
+        
+        global_model.load_state_dict(global_state_dict)
+
+
+    else:
+        global_state_dict = global_model.state_dict()
+        if previous_global_model_weights is not None:
+            previous_global_model_weights = copy.deepcopy(global_state_dict)
+
+        # Calculating FedAVG
+        for k in global_state_dict.keys():
+            weighted_sum = sum(client_models[domain].state_dict()[k].float() * domain_weights[domain] 
+                            for domain in client_models)
+            global_state_dict[k] = weighted_sum
+        global_model.load_state_dict(global_state_dict)
+    
+    # Calculating Lambda
+    lambda_ = {}
+    for domain, client_model in client_models.items():
+        flattened_params_global = torch.nn.utils.parameters_to_vector(global_model.backbone.parameters())
+        flattened_params_local = torch.nn.utils.parameters_to_vector(client_model.backbone.parameters())
+
+        lambda_[domain] = args.FedEMA_tau/(torch.norm(flattened_params_global-flattened_params_local)+1e-6)
+
+    # Calculating Mu
+    mu = {}
+    for k,v in lambda_.items():
+        if v>1:
+            mu[k] = 1
+        else:
+            mu[k] = v
+    
+
+    
+    for domain, client_model in client_models.items():
+        new_state_dict = copy.deepcopy(client_model.state_dict())
+
+        for k in global_state_dict.keys():
+            new_state_dict[k] = (mu[domain])*new_state_dict[k] + (1-mu[domain])*global_state_dict[k]
+        
+        client_model.load_state_dict(new_state_dict)
+
+
+
+            
+    torch.save(global_model.state_dict(), os.path.join(args.model_save_path, f'global_model.pth'))
+
+    if previous_global_model_weights is not None:
+        model_delta = {k: global_state_dict[k] - previous_global_model_weights[k] for k in global_state_dict}
+    else:
+        model_delta = None
+        previous_global_model_weights = copy.deepcopy(global_state_dict)
+
+    torch.save(previous_global_model_weights, os.path.join(args.model_save_path, f'previous_global_model.pth'))
+
+    print("Federated aggregation completed.")
+    return model_delta

@@ -1,6 +1,7 @@
 data/PACS/
 *.ipynb
 *.pdf
+*.csv
 wandb/
 saved_models*/
 workdirs/*

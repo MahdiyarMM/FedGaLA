@@ -5,7 +5,7 @@ from data.datasets import PACSDataset,  get_augmentations, DomainNetDataset, Hom
 import torch.optim as optim
 import os
 from torch.utils.data import DataLoader, Dataset, random_split
-from utils import client_update, federated_averaging, linear_evaluation, Aggregation_by_Alignment
+from utils import client_update, federated_averaging, linear_evaluation, Aggregation_by_Alignment, FedEMA
 from torchvision import datasets, models, transforms
 import torch.nn as nn
 import argparse
@@ -173,6 +173,9 @@ def main(args):
         elif args.aggregation.lower() == "abya":
             model_delta = Aggregation_by_Alignment(args, global_model, client_models, domain_weights, previous_global_model_weights)
             previous_global_model_weights = 1
+        elif args.aggregation.lower() == "fedema":
+            model_delta = FedEMA(args, global_model, client_models, domain_weights, previous_global_model_weights)
+            previous_global_model_weights = 1
 
         if args.eval_every :
             if comm_round % args.eval_every  == 0:
@@ -212,7 +215,7 @@ if __name__ == '__main__':
     parser.add_argument('--linear_epoch', type=int, default=100, metavar='Linear Epoch',
                         help='Number of epochs for linear evaluation (default: 100)')
     parser.add_argument('--aggregation', type=str, default="FedAVG", metavar='Aggregation Method',
-                    help='Which aggregation method to use (default: FedAVG) [FedAVG, AbyA]')
+                    help='Which aggregation method to use (default: FedAVG) [FedAVG, AbyA, FedEMA]')
     parser.add_argument('--client_gm', type=str, default="None", metavar='Client gradient manipulation',
                 help='Which client level method to use (default: None) [None, Delta]')
     parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
@@ -225,10 +228,8 @@ if __name__ == '__main__':
                         help = 'help=gpu workers for the dataset (default: 2)')
     parser.add_argument('--labeled_ratio', type=float, default=0.1, metavar='labeleded ratio',
                         help = 'ratio of the labeled data in the linear evaluation')
-    
     parser.add_argument('--labeled_ratio_sweep', action='store_true',
                         help = 'if selected, the labeled ratio will be sweeped from 0.1 to 1')
-    
     parser.add_argument('--le_random_seed', type=int, default=42, metavar='Linear Evalutaion Random Seed',
                         help = 'The radom seed for train/test split in the linear evaluator')
     parser.add_argument('--linear_batch_size', type=int, default=512, metavar='Linear Evalutaion Batch Size',
@@ -237,8 +238,8 @@ if __name__ == '__main__':
                         help = 'Gamma fo AbyA default = 0 (0<gmma<1)')
     parser.add_argument('--abya_iter', type=int, default=3, metavar='AbyA Iteration',
                         help = 'AbyA Iteration default = 3')
-    parser.add_argument('--delta_threshold', type=float, default=-0.1, metavar='Delta th',
-                        help = 'Delta th default = -0.1')
+    parser.add_argument('--delta_threshold', type=float, default=0, metavar='Delta th',
+                        help = 'Delta th default = 0')
     parser.add_argument('--wandb', type=str, default=None, metavar='wandb',
                         help = 'wandb run name (if None, no wandb)')
     parser.add_argument('--backbone', type=str, default='ResNet18', metavar='backbone',
@@ -249,6 +250,10 @@ if __name__ == '__main__':
                         help = 'Selects the SSL method (default: SimCLR) [SimCLR, MoCo]')
     parser.add_argument('--disc_log', type=bool, default=False, metavar='dl',
                         help = 'if True, the discard rate will be logged (default: False)')
+    parser.add_argument('--FedEMA_tau', type=float, default=0.7, metavar='t',
+                        help = 'tau for FedEMA (default: 0.7)')
+    parser.add_argument('--FedEMA_abya', type=bool, default=False, metavar='f_abya',
+                        help = 'if True, FedEMA will use AbyA (default: False)')
 
 
     args = parser.parse_args()
