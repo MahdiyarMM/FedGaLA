@@ -124,6 +124,13 @@ def linear_evaluation(args,global_model,device, labeled_ratio = 0.1, comm_round 
         train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
         test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
 
+    elif args.dataset.lower() == "minidomainnet":
+        train_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = True)
+        test_dataset = DomainNetDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = False)
+
+        train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
+        test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
+
     elif args.dataset.lower() == "homeoffice":
         train_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = True)
         test_dataset = HomeOfficeDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain[0], labeled_ratio= labeled_ratio, linear_train = False)

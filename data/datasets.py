@@ -65,7 +65,7 @@ def get_augmentations_linear_eval(dataset_name = 'pacs'):
             transforms.ToTensor(),
         ])
         return augmentation
-    elif dataset_name == "domainnet":
+    elif dataset_name == "domainnet" or dataset_name == "minidomainnet":
     
         augmentation = transforms.Compose([
             transforms.Resize((32,32), antialias=True),

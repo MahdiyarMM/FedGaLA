@@ -77,7 +77,7 @@ def main(args):
     # Initialize a variable to store the previous global model weights
     previous_global_model_weights = None
 
-    assert args.dataset.lower() in ["pacs", "homeoffice", 'domainnet'], "Please make sure one of the following datasets has been selected: ['pacs', 'homeoffice', 'domainnet']"
+    assert args.dataset.lower() in ["pacs", "homeoffice", 'domainnet', 'minidomainnet'], "Please make sure one of the following datasets has been selected: ['pacs', 'homeoffice', 'domainnet']"
 
     if args.dataset.lower() == "pacs":
 
@@ -102,6 +102,24 @@ def main(args):
                         'i': 'infograph',
                         'p': 'painting',
                         'q': 'quickdraw',
+                        'r': 'real',
+                        's': 'sketch'}
+        target_domain =  domains_dict[args.test_domain.lower()]
+    
+        assert args.test_domain.lower() in list("cipqrs"), "The test domain argument should be either 'C', 'I', 'P', 'Q', 'R' or 'S' when dataset == domainnet"
+        args.test_domain = target_domain
+
+        source_domains = [domain for domain in domains_dict.keys() if domain != target_domain[0].lower()]
+        print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
+
+        source_dataloader = {domain: DataLoader(DomainNetDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name='domainnet')), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
+        total_samples = sum(len(dataset) for dataset in source_dataloader.values())
+        domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
+    
+    elif args.dataset.lower() == "minidomainnet":
+
+        domains_dict = {'c': 'clipart',
+                        'p': 'painting',
                         'r': 'real',
                         's': 'sketch'}
         target_domain =  domains_dict[args.test_domain.lower()]
@@ -219,7 +237,7 @@ if __name__ == '__main__':
     parser.add_argument('--client_gm', type=str, default="None", metavar='Client gradient manipulation',
                 help='Which client level method to use (default: None) [None, Delta]')
     parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
-                help='Dataset to train on (default: pacs) [pacs, homeoffice]')
+                help='Dataset to train on (default: pacs) [pacs, homeoffice, domainnet, minidomainnet]')
     parser.add_argument('--test_domain', type=str, default='p', metavar='Domain',
                         help='What domain to test on (default: photo)')
     parser.add_argument('--dataroot', type=str, default='./data/PACS/', metavar='Dataset Root Path',
