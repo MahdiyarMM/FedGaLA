@@ -1,7 +1,7 @@
 from models import SimCLR, NT_XentLoss, LinearClassifier, MoCo, SimSiam, BYOLModel
 import torch
 import copy
-from data.datasets import PACSDataset,  get_augmentations, DomainNetDataset, HomeOfficeDataset
+from data.datasets import PACSDataset,  get_augmentations, DomainNetDataset, HomeOfficeDataset, TerraIncDataset
 import torch.optim as optim
 import os
 from torch.utils.data import DataLoader, Dataset, random_split
@@ -77,7 +77,7 @@ def main(args):
     # Initialize a variable to store the previous global model weights
     previous_global_model_weights = None
 
-    assert args.dataset.lower() in ["pacs", "homeoffice", 'domainnet', 'minidomainnet'], "Please make sure one of the following datasets has been selected: ['pacs', 'homeoffice', 'domainnet']"
+    assert args.dataset.lower() in ["pacs", "homeoffice", 'domainnet', 'minidomainnet', "terrainc"], "Please make sure one of the following datasets has been selected: ['pacs', 'homeoffice', 'domainnet']"
 
     if args.dataset.lower() == "pacs":
 
@@ -149,6 +149,25 @@ def main(args):
         source_dataloader = {domain: DataLoader(HomeOfficeDataset(root=f'{args.dataroot}', domain=domain[0], transform=get_augmentations(dataset_name='pacs')), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
         total_samples = sum(len(dataset) for dataset in source_dataloader.values())
         domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
+        
+    elif args.dataset.lower() == "terrainc":
+        assert str(args.test_domain.lower()).strip() in list(['38', '43' , '46', '100']), "The test domain argument should be either '38', '43' , '46', '100'  when dataset == terrainc"
+        domains_dict = {'100': 'location_100',
+                        '38': 'location_38',
+                        '43': 'location_43',
+                        '46': 'location_46'}
+
+        target_domain =  domains_dict[args.test_domain.lower()]
+    
+        
+        # args.test_domain = target_domain
+
+        source_domains = [domain for domain in domains_dict.keys() if domain != args.test_domain.lower()]
+        print(f"Source domains: {source_domains}",f"Target domain: {target_domain}")
+
+        source_dataloader = {domain: DataLoader(TerraIncDataset(root=f'{args.dataroot}', domain=domain, transform=get_augmentations(dataset_name='pacs')), batch_size=args.batch_size, shuffle=True, num_workers=args.workers, drop_last = True) for domain in source_domains}
+        total_samples = sum(len(dataset) for dataset in source_dataloader.values())
+        domain_weights = {domain: len(source_dataloader[domain]) / total_samples for domain in source_domains}
  
 
 
@@ -211,8 +230,10 @@ def main(args):
         for labeled_ratio in np.linspace(0.1, 0.9, 9):
             linear_evaluation(args,global_model,device, labeled_ratio= labeled_ratio)
     else:
+        
+        linear_evaluation(args,global_model,device, labeled_ratio= 0.1)
         linear_evaluation(args,global_model,device, labeled_ratio= args.labeled_ratio)
-
+    
 
 
 

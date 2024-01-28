@@ -4,7 +4,7 @@ from torchvision.datasets import ImageFolder
 
 
 def get_augmentations(dataset_name = 'pacs'):
-    print("dataset name: ", dataset_name)
+    # print("dataset name for augmentation: ", dataset_name)
     if dataset_name == "pacs":
         s = 1
         color_jitter = transforms.ColorJitter(
@@ -207,6 +207,32 @@ def create_dataset_df(root_dir, seed = 42, labeled_ratio = 0.1, test_domain = "r
 
     return train_df, sampled_df
 
+def create_dataset_df_terrainc(root_dir, seed = 42, labeled_ratio = 0.1, test_domain = "real"):
+    domains_dict = {k:k for k in sorted(os.listdir(root_dir)) if os.path.isdir(os.path.join(root_dir, k))}
+    categories_list = os.listdir(os.path.join(root_dir , list(domains_dict.values())[0]))
+    imgs_names = []
+    domains = []
+    categories = []
+    for domain in domains_dict.values():
+        for cat in categories_list:
+            path = os.path.join(root_dir, domain, cat)
+            files = glob(os.path.join(path, "*"))
+            imgs_names.extend(files)
+            domains.extend(len(files) * [domain])
+            categories.extend(len(files) * [cat])
+
+    df = pd.DataFrame(data = {"data" : imgs_names, "domain": domains, "cat" :  categories})
+    df['data'] = df['data'].apply(lambda x: x.replace(root_dir, ""))
+    # print(test_domain)
+    sampled_df = df[df['domain'] == test_domain].groupby('cat', group_keys=False).apply(lambda x: x.sample(frac=labeled_ratio, random_state=seed))
+
+    if labeled_ratio:
+        assert len(sampled_df)
+
+
+    train_df = df.drop(sampled_df.index)
+
+    return train_df, sampled_df
 
 
 
@@ -388,6 +414,71 @@ class HomeOfficeDataset(Dataset):
             self.df = self.train_df
         
         self.df = self.df[self.df['domain'] == self.domains_dict[domain.lower()[0]]]
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, idx):
+
+        img, domain, cat = self.df['data'].iloc[idx], self.df['domain'].iloc[idx], self.df['cat'].iloc[idx]
+        # print(os.path.join(self.root, img))
+        if self.label_ratio is None:
+            img1 = Image.open(os.path.join(self.root, img))
+            img2 = deepcopy(img1)
+
+            if self.transform is not None:
+                img1 = self.transform(img1)
+                img2 = self.transform(img2)
+            return img1, img2
+        
+        else:
+            img1 = Image.open(os.path.join(self.root, img))
+            if self.transform is not None:
+                img1 = self.transform(img1)
+            return img1, self.cat2numerical_dict[cat]
+        
+        
+        
+class TerraIncDataset(Dataset):
+
+    """TerraIncDatasetDataset"""
+
+    def __init__(self, root = "/media/milad/DATA/Federated/data/terrainc_dataset", transform=None, domain = '38', labeled_ratio = None, linear_train = True, random_seed = 42):
+        """
+        Arguments:
+            root (string): Directory with all the images.
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        locations = ['38', '43' , '46', '100']
+        if labeled_ratio is None:
+            linear_train = False
+        self.root = root
+        self.linear_train = linear_train
+        self.transform = transform
+        self.domains_dict = {k.split("_")[-1]:k for k in sorted(os.listdir(root)) if os.path.isdir(os.path.join(root, k))}
+        self.categories_list = os.listdir(os.path.join(root , list(self.domains_dict.values())[0]))
+        
+    
+        self.classes = os.listdir(os.path.join(root , self.domains_dict[domain.lower()]))
+        self.numerical2cat_dict = {self.classes.index(cat) : cat for cat in self.classes}
+        self.cat2numerical_dict = {v:k for k,v in self.numerical2cat_dict.items()}
+
+
+        # print(domain.lower())
+        self.train_df , self.test_df = create_dataset_df_terrainc(root_dir=root, seed = random_seed, labeled_ratio = (0 if labeled_ratio is None else labeled_ratio), test_domain = self.domains_dict[domain.lower()])
+
+
+        assert(len(self.train_df))
+
+        self.label_ratio = labeled_ratio
+        # if self.label_ratio is not None:
+        if self.linear_train:
+            self.df = self.test_df
+        else:
+            self.df = self.train_df
+        
+        self.df = self.df[self.df['domain'] == self.domains_dict[domain.lower()]]
 
     def __len__(self):
         return len(self.df)
