@@ -1,4 +1,5 @@
 data/PACS/
+data/DomainNet/
 *.ipynb
 *.pdf
 *.csv
