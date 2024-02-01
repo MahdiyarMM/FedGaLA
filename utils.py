@@ -215,7 +215,7 @@ def Aggregation_by_Alignment(args, global_model, client_models, domain_weights, 
             parame_vector = torch.cat([(client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)-previous_global_model_weights[k].float().flatten().unsqueeze(0))*domain_weights[domain] for domain in client_models], dim=0)
         else:
             parame_vector = torch.cat([client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)*domain_weights[domain] for domain in client_models], dim=0)
-        weightes = AbyA(parame_vector, num_iter=args.abya_iter, gamma=args.gamma)
+        weightes = Global_Alignment(parame_vector, num_iter=args.ga_iter, gamma=args.gamma)
         weighted_sum = sum(client_models[domain].state_dict()[k].float() * weightes[i] 
                            for i, domain in enumerate(client_models))
         global_state_dict[k] = weighted_sum
@@ -246,7 +246,7 @@ def Aggregation_by_Alignment(args, global_model, client_models, domain_weights, 
 
 
 
-def AbyA(vectors, num_iter=3, gamma=0):
+def Global_Alignment(vectors, num_iter=3, gamma=0):
     """
     Aggregates the vectors using a aggrement.
 
@@ -256,7 +256,7 @@ def AbyA(vectors, num_iter=3, gamma=0):
     - gamma (float): hyperparametr stes the weight of AbyA.
 
     Returns:
-    - torch.Tensor: The aggregated vector (1-gmma)AbyA + gamma*avg.
+    - torch.Tensor: The aggregated vector (1-gmma)*GA + gamma*avg.
     """
     # Initial aggregation as the mean of the vectors
     current_agg = torch.mean(vectors, dim=0)
@@ -302,7 +302,7 @@ def FedEMA(args, global_model, client_models, domain_weights, previous_global_mo
                 parame_vector = torch.cat([(client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)-previous_global_model_weights[k].float().flatten().unsqueeze(0))*domain_weights[domain] for domain in client_models], dim=0)
             else:
                 parame_vector = torch.cat([client_models[domain].state_dict()[k].float().flatten().unsqueeze(0)*domain_weights[domain] for domain in client_models], dim=0)
-            weightes = AbyA(parame_vector, num_iter=args.abya_iter, gamma=args.gamma)
+            weightes = Global_Alignment(parame_vector, num_iter=args.abya_iter, gamma=args.gamma)
             weighted_sum = sum(client_models[domain].state_dict()[k].float() * weightes[i] 
                             for i, domain in enumerate(client_models))
             global_state_dict[k] = weighted_sum

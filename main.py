@@ -207,7 +207,7 @@ def main(args):
         if args.aggregation.lower() == "fedavg":
             model_delta = federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights)
             previous_global_model_weights = 1
-        elif args.aggregation.lower() == "abya":
+        elif args.aggregation.lower() == "ga" or args.aggregation.lower() == "global_alignment":
             model_delta = Aggregation_by_Alignment(args, global_model, client_models, domain_weights, previous_global_model_weights)
             previous_global_model_weights = 1
         elif args.aggregation.lower() == "fedema":
@@ -241,20 +241,20 @@ if __name__ == '__main__':
     # Training parameters
     parser = argparse.ArgumentParser(description='Federated Domain Generalization')
 
-    parser.add_argument('--communication_rounds', type=int, default=2, metavar='Rounds',
+    parser.add_argument('--communication_rounds', type=int, default=100, metavar='Rounds',
                         help='Number of communication rounds (default: 100)')
     parser.add_argument('--batch_size', type=int, default=128, metavar='Batch Size',
                         help='Batch size (default: 128)')
     parser.add_argument('--model_save_path', type=str, default= None, metavar='save_path',
                         help='Path to save models (default: None')
-    parser.add_argument('--client_epochs', type=int, default=5, metavar='client_epochs',
+    parser.add_argument('--client_epochs', type=int, default=7, metavar='client_epochs',
                         help='Number of epochs to train on each client (default: 5)')
     parser.add_argument('--linear_lr', type=float, default=3e-3, metavar='Linear LR',
                         help='Learning rate for linear evaluation (default: 0.001)')
     parser.add_argument('--linear_epoch', type=int, default=100, metavar='Linear Epoch',
                         help='Number of epochs for linear evaluation (default: 100)')
     parser.add_argument('--aggregation', type=str, default="FedAVG", metavar='Aggregation Method',
-                    help='Which aggregation method to use (default: FedAVG) [FedAVG, AbyA, FedEMA]')
+                    help='Which aggregation method to use (default: FedAVG) [FedAVG, GA, FedEMA]')
     parser.add_argument('--client_gm', type=str, default="None", metavar='Client gradient manipulation',
                 help='Which client level method to use (default: None) [None, Delta]')
     parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
@@ -273,10 +273,10 @@ if __name__ == '__main__':
                         help = 'The radom seed for train/test split in the linear evaluator')
     parser.add_argument('--linear_batch_size', type=int, default=512, metavar='Linear Evalutaion Batch Size',
                         help = 'Linear Evalutaion Batch Size default = 512')
-    parser.add_argument('--gamma', type=float, default=0, metavar='Gamma fo AbyA',
-                        help = 'Gamma fo AbyA default = 0 (0<gmma<1)')
-    parser.add_argument('--abya_iter', type=int, default=3, metavar='AbyA Iteration',
-                        help = 'AbyA Iteration default = 3')
+    parser.add_argument('--gamma', type=float, default=0, metavar='Gamma fo Global Alignment',
+                        help = 'Gamma fo Global Alignment default = 0 (0<gmma<1)')
+    parser.add_argument('--ga_iter', type=int, default=3, metavar='Global Alignment Iteration',
+                        help = 'Global Alignment Iteration default = 3')
     parser.add_argument('--delta_threshold', type=float, default=0, metavar='Delta th',
                         help = 'Delta th default = 0')
     parser.add_argument('--wandb', type=str, default=None, metavar='wandb',
@@ -291,8 +291,8 @@ if __name__ == '__main__':
                         help = 'if True, the discard rate will be logged (default: False)')
     parser.add_argument('--FedEMA_tau', type=float, default=0.7, metavar='t',
                         help = 'tau for FedEMA (default: 0.7)')
-    parser.add_argument('--FedEMA_abya', type=bool, default=False, metavar='f_abya',
-                        help = 'if True, FedEMA will use AbyA (default: False)')
+    parser.add_argument('--FedEMA_ga', type=bool, default=False, metavar='f_abya',
+                        help = 'if True, FedEMA will use Global Alignment (default: False)')
 
 
     args = parser.parse_args()
