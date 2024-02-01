@@ -21,13 +21,13 @@ To train one of the baselines, please follow the instructions below
 
 
 ```bash
-python main.py  --test_domain s --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --backbone resnet18 --aggregation FedAVG --SSL simclr --labeled_ratio 0.3 --workers 2
+python main.py  --test_domain s --dataset pacs --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --backbone resnet18 --aggregation FedAVG --SSL simclr --labeled_ratio 0.3 --workers 2
 ```
 
  
 To train FedGaLa, run the following code:
 ```bash
-python main.py  --test_domain s --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --backbone resnet18 --aggregation GA --SSL simclr --labeled_ratio 0.3  --client_gm LA --local_threshold 0.0 --gamma 0.00 --workers 2
+python main.py  --test_domain s --dataset pacs --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --backbone resnet18 --aggregation GA --SSL simclr --labeled_ratio 0.3  --client_gm LA --local_threshold 0.0 --gamma 0.00 --workers 2
 ```
 In the code above, `GA` and `LA` stand for Global Alignment and Local Alignment, respectively. By default, aggregation is set to FedAVG and client_gm is None. For workers, plase set it to `0` if you are using a windows machine.
 
@@ -37,6 +37,8 @@ We train on the following four datasets:
 2) [OfficeHome](https://drive.google.com/file/d/1eeafkGeLjxh4hduAcnyjT0Gr3FA7sxoj/view?usp=sharing)
 3) [TerraINC](https://drive.google.com/file/d/1OQbbya0fDwwa-UyQe2VZG5_lgOyTdNe8/view?usp=sharing)
 4) [MiniDomainNet](https://drive.google.com/file/d/1KMPXiRXh5SUTcQSWYmnRBQuD4MRGFSDX/view?usp=sharing)
+
+Please download and extract them to `./data` directory or a directory of your own choosing and then change the `--dataroot` argument to that directoory.
 
 
 
