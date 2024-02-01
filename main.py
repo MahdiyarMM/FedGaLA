@@ -256,7 +256,7 @@ if __name__ == '__main__':
     parser.add_argument('--aggregation', type=str, default="FedAVG", metavar='Aggregation Method',
                     help='Which aggregation method to use (default: FedAVG) [FedAVG, GA, FedEMA]')
     parser.add_argument('--client_gm', type=str, default="None", metavar='Client gradient manipulation',
-                help='Which client level method to use (default: None) [None, Delta]')
+                help='Which client level method to use (default: None) [None, LA]')
     parser.add_argument('--dataset', type=str, default="pacs", metavar='Dataset to train on',
                 help='Dataset to train on (default: pacs) [pacs, homeoffice, domainnet, minidomainnet]')
     parser.add_argument('--test_domain', type=str, default='p', metavar='Domain',
@@ -277,8 +277,8 @@ if __name__ == '__main__':
                         help = 'Gamma fo Global Alignment default = 0 (0<gmma<1)')
     parser.add_argument('--ga_iter', type=int, default=3, metavar='Global Alignment Iteration',
                         help = 'Global Alignment Iteration default = 3')
-    parser.add_argument('--delta_threshold', type=float, default=0, metavar='Delta th',
-                        help = 'Delta th default = 0')
+    parser.add_argument('--local_threshold', type=float, default=0, metavar='Local Alignment th',
+                        help = 'Threshold default = 0')
     parser.add_argument('--wandb', type=str, default=None, metavar='wandb',
                         help = 'wandb run name (if None, no wandb)')
     parser.add_argument('--backbone', type=str, default='ResNet18', metavar='backbone',

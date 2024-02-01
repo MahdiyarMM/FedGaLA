@@ -49,13 +49,13 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
             loss.backward()
 
             # Compute cosine similarity and update conditionally
-            if model_delta is not None and args.client_gm == 'Delta':
+            if model_delta is not None and args.client_gm.lower() == 'la':
                 for name, param in client_model.named_parameters():
                     grad = param.grad
                     if grad is not None and name in model_delta:
                         total += 1
                         sim = cosine_similarity(grad.view(1, -1), model_delta[name].view(1, -1))
-                        if sim < args.delta_threshold:
+                        if sim < args.local_threshold:
                             param.grad = None  # Discard the gradient
                             discard += 1
 
