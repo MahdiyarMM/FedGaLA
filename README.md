@@ -38,6 +38,8 @@ We train on the following four datasets:
 3) [TerraINC](https://drive.google.com/file/d/1OQbbya0fDwwa-UyQe2VZG5_lgOyTdNe8/view?usp=sharing)
 4) [MiniDomainNet](https://drive.google.com/file/d/1KMPXiRXh5SUTcQSWYmnRBQuD4MRGFSDX/view?usp=sharing)
 
+For the pacs dataset, download this [csv](https://drive.google.com/file/d/19DZCyBbe_F_-7iUrTxG-AEDlpIUzvpFJ/view?usp=sharing) file and put in the directory for pacs dataset.
+
 Please download and extract them to `./data` directory or a directory of your own choosing and then change the `--dataroot` argument to that directoory.
 
 
