@@ -33,10 +33,10 @@ In the code above, `GA` and `LA` stand for Global Alignment and Local Alignment,
 
 ## Data
 We train on the following four datasets:
-1) [PACS](https://drive.google.com/file/d/13XXgVqJ2cVGGcL3afh3sbDQ6FV-O-oDw/view?usp=sharing)
-2) [OfficeHome](https://drive.google.com/file/d/1eeafkGeLjxh4hduAcnyjT0Gr3FA7sxoj/view?usp=sharing)
-3) [TerraINC](https://drive.google.com/file/d/1OQbbya0fDwwa-UyQe2VZG5_lgOyTdNe8/view?usp=sharing)
-4) [MiniDomainNet](https://drive.google.com/file/d/1KMPXiRXh5SUTcQSWYmnRBQuD4MRGFSDX/view?usp=sharing)
+1) [PACS](https://www.v7labs.com/open-datasets/pacs)
+2) [OfficeHome](https://www.hemanthdv.org/officeHomeDataset.html)
+3) [TerraINC](https://lilablobssc.blob.core.windows.net/caltechcameratraps/eccv_18_all_images_sm.tar.gz)
+4) [DomainNet](http://ai.bu.edu/M3SDA/)
 
 For the pacs dataset, download this [csv](https://drive.google.com/file/d/19DZCyBbe_F_-7iUrTxG-AEDlpIUzvpFJ/view?usp=sharing) file and put in the directory for pacs dataset.
 
