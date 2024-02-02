@@ -1,9 +1,9 @@
-# FedGaLa
+# FedGaLA
 Federated Unsupervised Domain Generalization using Global and Local
 Alignment of Gradients
 
 ## Introduction
-This is the officiial documentation for our FedGaLa paper submitted to ICML 2024. 
+This is the official documentation for our FedGaLA paper submitted to ICML 2024. 
 Our proposed FedGaLA performs gradient alignment at both local (client) and global (server) stages to achieve a more generalized aggregated model.
 
 ![fig_1_pages-to-jpg-0001](https://github.com/MahdiyarMM/Fed_DG/assets/44018277/2ca2a417-e3f6-4566-8e0e-c9af6e112c80)
@@ -25,7 +25,7 @@ python main.py  --test_domain s --dataset pacs --dataroot ./data/PACS --labeled_
 ```
 
  
-To train FedGaLa, run the following code:
+To train FedGaLA, run the following code:
 ```bash
 python main.py  --test_domain s --dataset pacs --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --backbone resnet18 --aggregation GA --SSL simclr --labeled_ratio 0.3  --client_gm LA --local_threshold 0.0 --gamma 0.00 --workers 2
 ```
@@ -33,10 +33,10 @@ In the code above, `GA` and `LA` stand for Global Alignment and Local Alignment,
 
 ## Data
 We train on the following four datasets:
-1) [PACS](https://drive.google.com/file/d/13XXgVqJ2cVGGcL3afh3sbDQ6FV-O-oDw/view?usp=sharing)
-2) [OfficeHome](https://drive.google.com/file/d/1eeafkGeLjxh4hduAcnyjT0Gr3FA7sxoj/view?usp=sharing)
-3) [TerraINC](https://drive.google.com/file/d/1OQbbya0fDwwa-UyQe2VZG5_lgOyTdNe8/view?usp=sharing)
-4) [MiniDomainNet](https://drive.google.com/file/d/1KMPXiRXh5SUTcQSWYmnRBQuD4MRGFSDX/view?usp=sharing)
+1) [PACS](https://www.v7labs.com/open-datasets/pacs)
+2) [OfficeHome](https://www.hemanthdv.org/officeHomeDataset.html)
+3) [TerraINC](https://lilablobssc.blob.core.windows.net/caltechcameratraps/eccv_18_all_images_sm.tar.gz)
+4) [DomainNet](http://ai.bu.edu/M3SDA/)
 
 For the pacs dataset, download this [csv](https://drive.google.com/file/d/19DZCyBbe_F_-7iUrTxG-AEDlpIUzvpFJ/view?usp=sharing) file and put in the directory for pacs dataset.
 
