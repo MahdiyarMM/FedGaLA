@@ -1,9 +1,9 @@
-# FedGaLa
+# FedGaLA
 Federated Unsupervised Domain Generalization using Global and Local
 Alignment of Gradients
 
 ## Introduction
-This is the officiial documentation for our FedGaLa paper submitted to ICML 2024. 
+This is the official documentation for our FedGaLA paper submitted to ICML 2024. 
 Our proposed FedGaLA performs gradient alignment at both local (client) and global (server) stages to achieve a more generalized aggregated model.
 
 ![fig_1_pages-to-jpg-0001](https://github.com/MahdiyarMM/Fed_DG/assets/44018277/2ca2a417-e3f6-4566-8e0e-c9af6e112c80)
@@ -25,7 +25,7 @@ python main.py  --test_domain s --dataset pacs --dataroot ./data/PACS --labeled_
 ```
 
  
-To train FedGaLa, run the following code:
+To train FedGaLA, run the following code:
 ```bash
 python main.py  --test_domain s --dataset pacs --dataroot ./data/PACS --labeled_ratio 0.1 --communication_rounds 100 --client_epoch 7 --backbone resnet18 --aggregation GA --SSL simclr --labeled_ratio 0.3  --client_gm LA --local_threshold 0.0 --gamma 0.00 --workers 2
 ```
