@@ -125,7 +125,7 @@ class PACSDataset(Dataset):
 
     """PACS Dataset"""
 
-    def __init__(self, root = "/media/milad/DATA/Federated/data/PACS", transform=None, domain = "A", labeled_ratio = None, linear_train = True):
+    def __init__(self, root = "./data/PACS", transform=None, domain = "A", labeled_ratio = None, linear_train = True):
         """
         Arguments:
             root (string): Directory with all the images.
@@ -240,7 +240,7 @@ def create_dataset_df_terrainc(root_dir, seed = 42, labeled_ratio = 0.1, test_do
 
 #     """DomainNet Dataset"""
 
-#     def __init__(self, root = "/media/milad/DATA/Federated/data/DomainNet", transform=None, domain = "R", labeled_ratio = None, linear_train = True, random_seed = 42):
+#     def __init__(self, root = "./data/DomainNet", transform=None, domain = "R", labeled_ratio = None, linear_train = True, random_seed = 42):
 #         """
 #         Arguments:
 #             root (string): Directory with all the images.
@@ -302,7 +302,7 @@ class DomainNetDataset(Dataset):
 
     """DomainNet Dataset"""
 
-    def __init__(self, root = "/media/milad/DATA/Federated/data/DomainNet", transform=None, domain = "R", labeled_ratio = None, linear_train = True, random_seed = 42):
+    def __init__(self, root = "./data/DomainNet", transform=None, domain = "R", labeled_ratio = None, linear_train = True, random_seed = 42):
         """
         Arguments:
             root (string): Directory with all the images.
@@ -379,7 +379,7 @@ class HomeOfficeDataset(Dataset):
 
     """Home Office Dataset"""
 
-    def __init__(self, root = "/media/milad/DATA/Federated/data/OfficeHomeDataset/", transform=None, domain = "R", labeled_ratio = None, linear_train = True, random_seed = 42):
+    def __init__(self, root = "./data/OfficeHomeDataset/", transform=None, domain = "R", labeled_ratio = None, linear_train = True, random_seed = 42):
         """
         Arguments:
             root (string): Directory with all the images.
@@ -443,7 +443,7 @@ class TerraIncDataset(Dataset):
 
     """TerraIncDatasetDataset"""
 
-    def __init__(self, root = "/media/milad/DATA/Federated/data/terrainc_dataset", transform=None, domain = '38', labeled_ratio = None, linear_train = True, random_seed = 42):
+    def __init__(self, root = "./data/terrainc_dataset", transform=None, domain = '38', labeled_ratio = None, linear_train = True, random_seed = 42):
         """
         Arguments:
             root (string): Directory with all the images.
