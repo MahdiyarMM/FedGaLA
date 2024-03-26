@@ -1,12 +1,10 @@
-numpy
-torch
+numpy==1.24.3
 torchvision==0.15.2
 torch==2.0.1
 pandas==1.5.3
-matplotlib
+matplotlib==3.7.1
 wandb
 opencv-python==4.8.0.76
 tqdm
-matplotlib
 scipy==1.10.1
 Pillow==9.4.0

@@ -5,7 +5,7 @@ from data.datasets import PACSDataset,  get_augmentations, DomainNetDataset, Hom
 import torch.optim as optim
 import os
 from torch.utils.data import DataLoader, Dataset, random_split
-from utils import client_update, federated_averaging, linear_evaluation, Aggregation_by_Alignment, FedEMA
+from utils import client_update, federated_averaging, linear_evaluation, Aggregation_by_Alignment, FedEMA, linear_eval_repeat
 from torchvision import datasets, models, transforms
 import torch.nn as nn
 import argparse
@@ -13,6 +13,10 @@ import wandb
 import numpy as np
 from datetime import datetime
 import json
+
+import torch
+
+
 
 def main(args):
     
@@ -37,7 +41,7 @@ def main(args):
     if args.wandb is not None:
         wandb.init(project='Fed_DG',name=args.wandb, config=args)
 
-
+    torch.manual_seed(args.random_seed)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Initialize global model with custom ResNet
@@ -201,7 +205,8 @@ def main(args):
             if i == 0  and args.disc_log:
                 disc_log=True
 
-            client_update(args, client_models[domain], optimizers[domain], source_dataloader[domain], criterion, device, model_delta=model_delta, disc_log=disc_log)
+            client_update(args, client_models[domain], optimizers[domain], source_dataloader[domain], 
+                          criterion, device, model_delta=model_delta, disc_log=disc_log)
 
         # Federated averaging with domain weights
         if args.aggregation.lower() == "fedavg":
@@ -220,7 +225,8 @@ def main(args):
                 #     for labeled_ratio in np.linspace(0.1, 0.9, 9):
                 #         linear_evaluation(args,global_model,device, labeled_ratio= labeled_ratio, comm_round = comm_round)
                 # else:
-                linear_evaluation(args,global_model,device, labeled_ratio= 0.1, comm_round = comm_round)
+                # linear_evaluation(args,global_model,device, labeled_ratio= 0.1, comm_round = comm_round)
+                linear_eval_repeat(args,global_model,device, labeled_ratio= 0.1, comm_round = comm_round, repeat=10)
         # else:
         #     if args.wandb:
         #         wandb.log({'Accuracy': 0.0})
@@ -293,7 +299,8 @@ if __name__ == '__main__':
                         help = 'tau for FedEMA (default: 0.7)')
     parser.add_argument('--FedEMA_ga', type=bool, default=False, metavar='f_abya',
                         help = 'if True, FedEMA will use Global Alignment (default: False)')
-
+    parser.add_argument('--prox_mu', type=float, default=0, metavar='prox_mu for FedProx')
+    parser.add_argument('--random_seed', type=int, default=0, metavar='random seed value for model initialization')
 
     args = parser.parse_args()
     print('Arguments =')

@@ -11,7 +11,11 @@ import numpy as np
 from models import info_nce_loss, loss_fn, byol_loss_fn
 import wandb
 
-def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None, disc_log=False):
+
+def client_update(args, client_model, optimizer, train_loader, criterion,device, model_delta=None, disc_log=False, update_delta = False):
+    if args.prox_mu:
+        initial_model = copy.deepcopy(client_model) # the model at the begining of the communication round (for fedprox)
+        
     client_model.train()
     total_samples = 0
     for epoch in tqdm(range(args.client_epochs)):
@@ -46,6 +50,13 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
                 loss = loss_one + loss_two
                 loss = loss.mean()
             
+            # added fedprox proximity term
+            if args.prox_mu:
+                proximity_term = 0
+                for w0, w1 in zip(client_model.parameters(), initial_model.parameters()):
+                    proximity_term += (w0 - w1).norm(2) * args.prox_mu 
+                # print(f'loss: {loss} ---- prox_term : {proximity_term}')
+                loss += proximity_term
             loss.backward()
 
             # Compute cosine similarity and update conditionally
@@ -55,15 +66,20 @@ def client_update(args, client_model, optimizer, train_loader, criterion,device,
                     if grad is not None and name in model_delta:
                         total += 1
                         sim = cosine_similarity(grad.view(1, -1), model_delta[name].view(1, -1))
+                        print(sim)
                         if sim < args.local_threshold:
+                            print(param.grad.shape)
+                            print(param.grad.dtype)
                             param.grad = None  # Discard the gradient
                             discard += 1
+            
 
             optimizer.step()
             # break
         if (model_delta is not None) and disc_log and (args.wandb is not None):
             if args.wandb:
                 wandb.log({f'discard_rate': np.round(100 * discard / total, 3)})
+        # print('discard : ', discard)
     return client_model
 
 def federated_averaging(args, global_model, client_models, domain_weights, previous_global_model_weights):
@@ -366,3 +382,113 @@ def FedEMA(args, global_model, client_models, domain_weights, previous_global_mo
 
     print("Federated aggregation completed.")
     return model_delta
+
+
+
+
+
+from torch.utils.data import DataLoader, TensorDataset
+def linear_evaluation(args, global_model, device, labeled_ratio=0.1, comm_round=None, linear_weights=None, lr=0.0001, verbose=False):
+    global_model = copy.deepcopy(global_model)
+    # Freeze the parameters of the model
+    for param in global_model.parameters():
+        param.requires_grad = False
+
+    # Load the target domain dataset
+    if args.dataset.lower() == 'pacs':
+        train_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio=labeled_ratio, linear_train=True)
+        test_dataset = PACSDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name=args.dataset.lower()), domain=args.test_domain[0], labeled_ratio=labeled_ratio, linear_train=False)
+
+    elif args.dataset.lower() == "terrainc":
+        # print('Loading Terrainc')
+        train_dataset = TerraIncDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain.split("_")[-1], labeled_ratio= labeled_ratio, linear_train = True)
+        test_dataset = TerraIncDataset(root=f'{args.dataroot}', transform=get_augmentations_linear_eval(dataset_name='pacs'), domain=args.test_domain.split("_")[-1], labeled_ratio= labeled_ratio, linear_train = False)
+
+        train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
+        test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
+
+    # Preprocess datasets to extract features once
+    train_loader = DataLoader(train_dataset, batch_size=args.linear_batch_size, shuffle=True, num_workers=args.workers)
+    test_loader = DataLoader(test_dataset, batch_size=args.linear_batch_size, shuffle=False, num_workers=args.workers)
+
+    train_features, train_labels = extract_features(global_model, train_loader, device)
+    test_features, test_labels = extract_features(global_model, test_loader, device)
+
+    # Convert to TensorDatasets and DataLoaders for training/testing the linear classifier
+    train_loader = DataLoader(TensorDataset(train_features, train_labels), batch_size=args.linear_batch_size, shuffle=True)
+    test_loader = DataLoader(TensorDataset(test_features, test_labels), batch_size=args.linear_batch_size, shuffle=False)
+
+    # Instantiate the linear classifier
+    input_dim = 2048  # Assuming the output dimension of the global model's feature extractor is 2048
+    num_classes = len(train_dataset.classes)  # Number of classes in the target domain
+    
+    linear_classifier = LinearClassifier(input_dim, num_classes).to(device)
+    if linear_weights is not None:
+        linear_classifier.load_state_dict(copy.deepcopy(linear_weights))
+
+    # Loss and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(linear_classifier.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 20, gamma=0.3, last_epoch=-1, verbose=verbose)
+
+    # Train the linear classifier
+    # print("Training the linear classifier...")
+    accs_list = []
+    for epoch in tqdm(range(100), disable=not verbose):
+        linear_classifier.train()
+        for features, labels in train_loader:
+            features, labels = features.to(device), labels.to(device)
+            optimizer.zero_grad()
+
+            outputs = linear_classifier(features)  # Get predictions from the linear classifier
+
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+        # Evaluate
+        acc = evaluate(linear_classifier, test_loader, device)
+        if verbose:
+            print(f'Epoch: {epoch}, Test Accuracy: {acc}%')
+        accs_list.append(acc)
+    
+    return  accs_list
+
+def extract_features(model, loader, device):
+    model.eval()
+    features = []
+    labels = []
+
+    with torch.no_grad():
+        for images, labels_batch in loader:
+            images = images.to(device)
+            output = model.backbone(images)
+            features.append(output)
+            labels.append(labels_batch)
+
+    return torch.cat(features), torch.cat(labels)
+
+def evaluate(model, data_loader, device):
+    model.eval()
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for features, labels in data_loader:
+            features, labels = features.to(device), labels.to(device)
+            outputs = model(features)
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+    accuracy = 100 * correct / total
+    return accuracy
+
+
+def linear_eval_repeat(args, global_model, device, labeled_ratio=0.1, comm_round=None, linear_weights=None, lr=0.0001, verbose=False, repeat = 10):
+    acc_list = []
+    for i in range(repeat):
+        acc = linear_evaluation(args, global_model, device, labeled_ratio=labeled_ratio, comm_round=comm_round, 
+                                linear_weights=linear_weights, lr=lr, verbose=verbose)[-1]
+        
+        acc_list.append(acc)
+    print(f'Acc : {np.mean(acc_list)}')
+    return acc_list
