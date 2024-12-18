@@ -23,11 +23,11 @@ Follow these steps to set up your environment and train models:
    ```bash
    pip install -r requirements.txt
    ```
-2.	Download Datasets
+2.	**Download Datasets**
 Use the links provided in the Data section. Extract the datasets into the ./data folder (or a directory of your choice).
-3.	Choose an SSL Method
+3.	**Choose an SSL Method**
 Select a Self-Supervised Learning method from byol, simsiam, moco, or simclr.
-4.	Train Baseline Models
+4.	**Train Baseline Models**
 To train a baseline model (e.g., FedSimCLR on the PACS dataset), use the following command:
 
 ```bash
@@ -36,7 +36,7 @@ python main.py --test_domain s --dataset pacs --dataroot ./data/PACS --labeled_r
 --SSL simclr --workers 2
 ```
 
-5.	Train FedGaLA
+5.	**Train FedGaLA**
 Use the following command to train the FedGaLA model:
 
 ```bash
