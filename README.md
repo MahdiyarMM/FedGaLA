@@ -2,7 +2,8 @@
 Federated Unsupervised Domain Generalization Using Global and Local Alignment of Gradients
 
 ## Introduction
-This is the official documentation for FedGaLA, submitted to NeurIPS 2024. FedGaLA performs gradient alignment at both the local (client) and global (server) levels to address the problem of domain generalization for multi-domain data under privacy-preserving constraints.
+This is the official documentation for FedGaLA published AAAI 2025. FedGaLA performs gradient alignment at both the local (client) and global (server) levels to address the problem of domain generalization for multi-domain data under privacy-preserving constraints.
+
 
 
 ## Requirements
