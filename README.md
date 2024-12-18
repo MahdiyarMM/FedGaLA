@@ -1,7 +1,7 @@
 # FedGaLA
 Federated Unsupervised Domain Generalization Using Global and Local Alignment of Gradients
 <p align="center">
-  <img src="https://raw.githubusercontent.com/MahdiyarMM/Fed_GaLA/refs/heads/main/assets/overview.png?token=GHSAT0AAAAAACK7FKPT4ENLABVCLFJ7KVZKZ3COR7Q" width="550" title="hover text">
+  <img src="assets/overview.png" width="550" title="hover text">
 </p>
 
 ## Introduction
