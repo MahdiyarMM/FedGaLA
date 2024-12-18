@@ -78,6 +78,14 @@ If you find this work useful, please consider citing:
 
 This project is licensed under the MIT License.
 
+## Our team
+
+- [Mahdiyar Molahasani](https://github.com/MahdiyarMM) 
+- [Milad Soltany](https://github.com/miladsoltany) 
+- [Farhad Pourpanah](https://github.com/Farhad0086) 
+
+Feel free to check out our GitHub profiles for more of our work!
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements, features, or bug fixes.
