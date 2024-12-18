@@ -24,7 +24,7 @@ Follow these steps to set up your environment and train models:
    pip install -r requirements.txt
    ```
 2.	Download Datasets
-Download the datasets from the links provided in the Data section. Extract the datasets into the ./data folder (or a directory of your choice).
+Use the links provided in the Data section. Extract the datasets into the ./data folder (or a directory of your choice).
 3.	Choose an SSL Method
 Select a Self-Supervised Learning method from byol, simsiam, moco, or simclr.
 4.	Train Baseline Models
