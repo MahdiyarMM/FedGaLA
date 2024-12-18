@@ -1,5 +1,8 @@
 # FedGaLA
 Federated Unsupervised Domain Generalization Using Global and Local Alignment of Gradients
+<p align="center">
+  <img src="https://raw.githubusercontent.com/MahdiyarMM/Fed_GaLA/refs/heads/main/assets/overview.png?token=GHSAT0AAAAAACK7FKPT4ENLABVCLFJ7KVZKZ3COR7Q" width="550" title="hover text">
+</p>
 
 ## Introduction
 FedGaLA is a novel framework for federated unsupervised domain generalization, combining global and local gradient alignment to enhance model generalization across diverse domains while preserving privacy. This repository contains the official implementation of FedGaLA as described in our paper published in *AAAI 2025*.
