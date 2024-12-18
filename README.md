@@ -127,6 +127,5 @@ Happy experimenting with FedGaLA!
 3. **Detailed Descriptions**: Added descriptions for parameters and features.
 4. **Standardized Structure**: Included sections like Citation, License, Contributing, and Contact for completeness.
 5. **Improved Clarity**: Simplified and clarified instructions for better usability.
-![image](https://github.com/user-attachments/assets/c12ee698-a32f-47ba-bbc9-02afb8f54d3d)
 
 
