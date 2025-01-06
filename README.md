@@ -13,6 +13,8 @@ FedGaLA is a novel framework for federated unsupervised domain generalization, c
 - **Flexible Self-Supervised Learning (SSL) Backbones**: Supports `byol`, `simsiam`, `moco`, and `simclr` SSL methods.
 - **Ease of Use**: Simple and modular implementation for easy experimentation and adaptation.
 
+For the full paper see [here](https://arxiv.org/pdf/2405.16304).
+
 ---
 
 ## Requirements
