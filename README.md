@@ -78,7 +78,14 @@ If you find this work useful, please consider citing:
   year={2025}
 }
 ```
-
+```bash
+@article{FedDG2024,
+  title={A Theoretical Framework for Federated Domain Generalization with Gradient Alignment},
+  author={Molahasani, Mahdiyar and Soltany, Milad and Pourpanah, Farhad and Greenspan, Michael and Etemad, Ali},
+  journal={NeurIPS Workshop on Mathematics of Modern Machine Learning},
+  year={2024}
+}
+```
 ## License
 
 This project is licensed under the MIT License.
